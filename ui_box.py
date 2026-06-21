@@ -119,4 +119,4 @@ class UI_BOX(Sprite):
     # Optional convenience draw when not using sprite groups:
     def draw_to(self):
         self._update_cached_surface_if_needed()
-        self.game_data.screen.blit(self._cached_surface, self.rect.topleft)
+        self.game_data.display.blit(self._cached_surface, self.rect.topleft)

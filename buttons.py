@@ -92,4 +92,4 @@ class Button(Sprite):
 
     def draw(self):
         """ Draws element onto a surface """
-        self.game_data.screen.blit(self.image, self.rect)
+        self.game_data.display.blit(self.image, self.rect)

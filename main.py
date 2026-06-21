@@ -15,18 +15,13 @@ from game_field import Game_Board
 BLUE = (106, 159, 181)
 WHITE = (255, 255, 255)
 
-display_width = 1000
-display_height = 800
-
 game_data = GameData()
 
 
 def main():
     pygame.init()
 
-    game_data.screen = pygame.display.set_mode((display_width, display_height))
-    # screen = pygame.display.set_mode((display_width, display_height))
-    game_data.game_state = GameState.NEWGAME
+    game_data.init()
 
     while game_data.game_state != GameState.QUIT:
         if game_data.game_state == GameState.TITLE:
@@ -83,7 +78,7 @@ def title_screen():
 
 def play_level():
     return_btn = Button(
-        center_position=(display_width/2, display_height - 30),
+        center_position=(game_data.display.get_width()/2, game_data.display.get_height() - 30),
         font_size=20,
         bg_rgb=BLUE,
         text_rgb=WHITE,
@@ -135,15 +130,14 @@ def play_level():
 
     ui_boxes = [ui_count_bombs, ui_count_flags, ui_timer]
 
-    game_board = Game_Board(display_width, display_height,
-                            game_data=game_data)
+    game_board = Game_Board(game_data=game_data)
 
     time_start = time.time()
     # while game_data.game_state != GameState.QUIT:
     while game_data.game_state == GameState.NEWGAME:
         game_data.update()
 
-        game_data.screen.fill(BLUE)
+        game_data.display.fill(BLUE)
 
         # Handle Buttons
         for button in buttons:
