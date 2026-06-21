@@ -1,0 +1,179 @@
+import time
+import pygame
+import pygame.freetype
+from pygame.sprite import Sprite
+from pygame.rect import Rect
+from pygame.locals import QUIT
+from enum import Enum
+
+from buttons import Button, ButtonActions
+from ui_box import UI_BOX
+from game_data import GameData, GameState
+from game_field import Game_Board
+
+
+BLUE = (106, 159, 181)
+WHITE = (255, 255, 255)
+
+display_width = 1000
+display_height = 800
+
+game_data = GameData()
+
+
+def main():
+    pygame.init()
+
+    game_data.screen = pygame.display.set_mode((display_width, display_height))
+    # screen = pygame.display.set_mode((display_width, display_height))
+    game_data.game_state = GameState.NEWGAME
+
+    while game_data.game_state != GameState.QUIT:
+        if game_data.game_state == GameState.TITLE:
+            title_screen()
+
+        if game_data.game_state == GameState.NEWGAME:
+            play_level()
+
+        if game_data.game_state == GameState.QUIT or game_data.game_state == GameState.GAMEOVER:
+            game_data.game_state = GameState.QUIT
+            pygame.quit()
+            return
+
+
+def title_screen():
+    start_btn = Button(
+        center_position=(display_width/2, display_height/2-100),
+        font_size=30,
+        bg_rgb=BLUE,
+        text_rgb=WHITE,
+        text="Start",
+        action=GameState.NEWGAME,
+    )
+    quit_btn = Button(
+        center_position=(display_width/2, display_height/2+100),
+        font_size=30,
+        bg_rgb=BLUE,
+        text_rgb=WHITE,
+        text="Quit",
+        action=GameState.QUIT,
+    )
+
+    buttons = [start_btn, quit_btn]
+
+    while True:
+        mouse_up = False
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                mouse_up = True
+
+            if event.type == QUIT:
+                pygame.quit()
+
+        screen.fill(BLUE)
+
+        for button in buttons:
+            ui_action = button.update(pygame.mouse.get_pos(), mouse_up)
+            if ui_action is not None:
+                return ui_action
+            button.draw(screen)
+
+        pygame.display.flip()
+
+
+def play_level():
+    return_btn = Button(
+        center_position=(display_width/2, display_height - 30),
+        font_size=20,
+        bg_rgb=BLUE,
+        text_rgb=WHITE,
+        text="Return to main menu",
+        action=GameState.TITLE,
+        game_data=game_data
+    )
+
+    buttons = [return_btn]
+
+    ui_count_bombs = UI_BOX(
+        rect=Rect(200, 50, 150, 50),
+        font_name="Courier",
+        font_size=20,
+        image_path="assets/mine_2.png",
+        outer_color=(180, 180, 180),
+        outer_border=(120, 120, 120),
+        left_bg=(160, 160, 160),
+        right_bg=(255, 255, 255),
+        padding=10,
+        game_data=game_data
+    )
+
+    ui_count_flags = UI_BOX(
+        rect=Rect(350, 50, 150, 50),
+        font_name="Courier",
+        font_size=20,
+        image_path="assets/flag.png",
+        outer_color=(180, 180, 180),
+        outer_border=(120, 120, 120),
+        left_bg=(160, 160, 160),
+        right_bg=(255, 255, 255),
+        padding=10,
+        game_data=game_data
+    )
+
+    ui_timer = UI_BOX(
+        rect=Rect(500, 50, 150, 50),
+        font_name="Courier",
+        font_size=20,
+        image_path="assets/flag.png",
+        outer_color=(180, 180, 180),
+        outer_border=(120, 120, 120),
+        left_bg=(160, 160, 160),
+        right_bg=(255, 255, 255),
+        padding=10,
+        game_data=game_data
+    )
+
+    ui_boxes = [ui_count_bombs, ui_count_flags, ui_timer]
+
+    game_board = Game_Board(display_width, display_height,
+                            game_data=game_data)
+
+    time_start = time.time()
+    # while game_data.game_state != GameState.QUIT:
+    while game_data.game_state == GameState.NEWGAME:
+        game_data.update()
+
+        game_data.screen.fill(BLUE)
+
+        # Handle Buttons
+        for button in buttons:
+            ui_action = button.update2()
+            if ui_action is not None:
+                game_data.game_state = ui_action
+            button.draw()
+
+        ui_count_bombs.set_text(f"x{game_board.num_bombs}")
+        ui_count_flags.set_text(f"x{game_board.num_flags}")
+        ui_timer.set_text(f"{int(time.time()-time_start)}s")
+
+        for ui_box in ui_boxes:
+            ui_box.draw_to()
+
+        # draw game field
+        # each game tile is like a button
+
+        game_board.update()
+
+        # print(game_board.game_won, game_board.game_over)
+        if game_board.game_over:
+            game_data.game_state = GameState.GAMEOVER
+        if game_board.game_won:
+            game_data.game_state = GameState.GAMEOVER
+
+        # print(game_data.game_state)
+
+        pygame.display.flip()
+
+
+if __name__ == "__main__":
+    main()
