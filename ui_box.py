@@ -8,9 +8,29 @@ from game_data import GameData
 class UI_BOX(Sprite):
     def __init__(self, rect, image_path, font_name="Courier", font_size=20,
                  outer_color=(180, 180, 180), outer_border=(120, 120, 120),
-                 left_bg=(160, 160, 160), right_bg=(255, 255, 255), padding=10, game_data: GameData = None):
+                 left_bg=(160, 160, 160), right_bg=(255, 255, 255), padding=10, 
+                 game_data: GameData = None,
+                 align_relative_to:tuple[Sprite, int] = None
+                 ):
         super().__init__()
         self.rect = pygame.Rect(rect)
+        if align_relative_to is not None:
+            if align_relative_to[1] == 1:
+                #right
+                self.rect.left = align_relative_to[0].rect.right
+                
+            elif align_relative_to[1] == 2:
+                #down
+                self.rect.top = align_relative_to[0].rect.bottom
+            elif align_relative_to[1] == 3:
+                #left
+                self.rect.right = align_relative_to[0].rect.left
+            elif align_relative_to[1] == 4:
+                #up
+                self.rect.bottom = align_relative_to[0].rect.top
+                
+            
+            
         self.outer_color = outer_color
         self.outer_border = outer_border
         self.outer_border_width = 2
@@ -119,4 +139,4 @@ class UI_BOX(Sprite):
     # Optional convenience draw when not using sprite groups:
     def draw_to(self):
         self._update_cached_surface_if_needed()
-        self.game_data.display.blit(self._cached_surface, self.rect.topleft)
+        self.game_data.display_buffer.blit(self._cached_surface, self.rect.topleft)

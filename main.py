@@ -77,33 +77,23 @@ def title_screen():
 
 
 def play_level():
-    return_btn = Button(
-        center_position=(game_data.display.get_width()/2, game_data.display.get_height() - 30),
-        font_size=20,
-        bg_rgb=BLUE,
-        text_rgb=WHITE,
-        text="Return to main menu",
-        action=GameState.TITLE,
-        game_data=game_data
-    )
+    # return_btn = Button(
+    #     center_position=(game_data.display_buffer.get_width()/2,
+    #                      game_data.display_buffer.get_height() - 30),
+    #     font_size=20,
+    #     bg_rgb=BLUE,
+    #     text_rgb=WHITE,
+    #     text="Return to main menu",
+    #     action=GameState.TITLE,
+    #     game_data=game_data
+    # )
 
-    buttons = [return_btn]
-
-    ui_count_bombs = UI_BOX(
-        rect=Rect(200, 50, 150, 50),
-        font_name="Courier",
-        font_size=20,
-        image_path="assets/mine_2.png",
-        outer_color=(180, 180, 180),
-        outer_border=(120, 120, 120),
-        left_bg=(160, 160, 160),
-        right_bg=(255, 255, 255),
-        padding=10,
-        game_data=game_data
-    )
+    buttons = [
+        # return_btn
+    ]
 
     ui_count_flags = UI_BOX(
-        rect=Rect(350, 50, 150, 50),
+        rect=Rect(game_data.display_buffer.get_width()/2-(160/2), 50, 160, 50),
         font_name="Courier",
         font_size=20,
         image_path="assets/flag.png",
@@ -114,6 +104,21 @@ def play_level():
         padding=10,
         game_data=game_data
     )
+    
+    ui_count_bombs = UI_BOX(
+        rect=Rect(200, 50, 150, 50),
+        font_name="Courier",
+        font_size=20,
+        image_path="assets/mine_2.png",
+        outer_color=(180, 180, 180),
+        outer_border=(120, 120, 120),
+        left_bg=(160, 160, 160),
+        right_bg=(255, 255, 255),
+        padding=10,
+        game_data=game_data,
+        align_relative_to=(ui_count_flags, 3)
+    )
+
 
     ui_timer = UI_BOX(
         rect=Rect(500, 50, 150, 50),
@@ -125,7 +130,8 @@ def play_level():
         left_bg=(160, 160, 160),
         right_bg=(255, 255, 255),
         padding=10,
-        game_data=game_data
+        game_data=game_data,
+        align_relative_to=(ui_count_flags, 1)
     )
 
     ui_boxes = [ui_count_bombs, ui_count_flags, ui_timer]
@@ -136,8 +142,6 @@ def play_level():
     # while game_data.game_state != GameState.QUIT:
     while game_data.game_state == GameState.NEWGAME:
         game_data.update()
-
-        game_data.display.fill(BLUE)
 
         # Handle Buttons
         for button in buttons:
@@ -159,12 +163,32 @@ def play_level():
         game_board.update()
 
         # print(game_board.game_won, game_board.game_over)
-        if game_board.game_over:
-            game_data.game_state = GameState.GAMEOVER
-        if game_board.game_won:
-            game_data.game_state = GameState.GAMEOVER
+        # if game_board.game_over:
+        #     game_data.game_state = GameState.GAMEOVER
+        # if game_board.game_won:
+        #     game_data.game_state = GameState.GAMEOVER
 
-        # print(game_data.game_state)
+        # Scale tile texture to window size
+        game_data.display_buffer = pygame.transform.scale(
+            game_data.display_buffer,
+            (
+                game_data.display_buffer.get_rect().width * game_data.display_scaling_factor,
+                game_data.display_buffer.get_rect().height * game_data.display_scaling_factor
+            )
+        )
+
+        print(
+            game_data.display_buffer,
+            game_data.display_buffer.get_rect(),
+            game_data.display_buffer.get_rect().width,
+            game_data.display_buffer.get_rect().height,
+            game_data.display_scaling_factor,
+            game_data.display_buffer.get_rect().width * game_data.display_scaling_factor,
+            game_data.display_buffer.get_rect().height * game_data.display_scaling_factor,
+        )
+
+        game_data.display.blit(game_data.display_buffer,
+                               game_data.display_buffer.get_rect())
 
         pygame.display.flip()
 
