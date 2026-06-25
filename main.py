@@ -124,7 +124,7 @@ def play_level():
         rect=Rect(500, 50, 150, 50),
         font_name="Courier",
         font_size=20,
-        image_path="assets/flag.png",
+        image_path="assets/stop_watch.png",
         outer_color=(180, 180, 180),
         outer_border=(120, 120, 120),
         left_bg=(160, 160, 160),
@@ -138,7 +138,7 @@ def play_level():
 
     game_board = Game_Board(game_data=game_data)
 
-    time_start = time.time()
+    # time_start = time.time()
     # while game_data.game_state != GameState.QUIT:
     while game_data.game_state == GameState.NEWGAME:
         game_data.update()
@@ -152,7 +152,8 @@ def play_level():
 
         ui_count_bombs.set_text(f"x{game_board.num_bombs}")
         ui_count_flags.set_text(f"x{game_board.num_flags}")
-        ui_timer.set_text(f"{int(time.time()-time_start)}s")
+        # ui_timer.set_text(f"{int(time.time()-time_start)}s")
+        ui_timer.set_text(f"{game_data.game_duration:.2f}s")
 
         for ui_box in ui_boxes:
             ui_box.draw_to()
@@ -162,8 +163,9 @@ def play_level():
 
         game_board.update()
 
-        # print(game_board.game_won, game_board.game_over)
-        # if game_board.game_over:
+        print(game_board.game_won, game_board.game_over)
+        if game_board.game_over or game_board.game_won:
+            game_data.timer_stop()
         #     game_data.game_state = GameState.GAMEOVER
         # if game_board.game_won:
         #     game_data.game_state = GameState.GAMEOVER

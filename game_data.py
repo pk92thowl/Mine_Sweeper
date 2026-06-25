@@ -9,7 +9,8 @@ DEFAULT_DISPLAY_HEIGHT = 1000
 
 BLUE = (106, 159, 181)
 WHITE = (255, 255, 255)
-BLACK = (0,0,0)
+BLACK = (0, 0, 0)
+
 
 class GameState(Enum):
     QUIT = -1
@@ -28,6 +29,10 @@ class GameData:
     display_scaling_factor: float = 1
     display_rescaled = False
 
+    _time_game_start: float = None
+    _timer_run = False
+    game_duration: float = 0
+
     def init(self):
         self.display = pygame.display.set_mode(
             (DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
@@ -37,7 +42,19 @@ class GameData:
             (DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT))
         self.game_state = GameState.NEWGAME
 
+    def timer_start(self):
+        if self._timer_run == False:
+            self._timer_run = True
+            self._time_game_start = time.time()
+
+    def timer_stop(self):
+        self._timer_run = False
+
     def update(self):
+
+        # Update Timer if active
+        if self._timer_run:
+            self.game_duration = time.time() - self._time_game_start
 
         # Mouse data
         self.mouse_pos = pygame.mouse.get_pos()

@@ -217,13 +217,20 @@ class GameTile(Sprite):
             else:
                 if isinstance(self.content, int) and self.content > 0:
                     font = pygame.freetype.SysFont(
-                        "Courier", FONT_SIZE, bold=True)
+                        "Courier",
+                        FONT_SIZE,
+                        bold=True
+                    )
+
                     text_img, _ = font.render(
-                        text=str(self.content), fgcolor=COLOR_TEXT, bgcolor=None)
+                        text=str(self.content),
+                        fgcolor=COLOR_TEXT,
+                        bgcolor=None
+                    )
 
                     text_img = pygame.transform.scale(
                         text_img,
-                        (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE)
+                        (DEFAULT_TILE_SIZE*0.5, DEFAULT_TILE_SIZE*0.5)
                     )
 
                     text_rect = text_img.get_rect(
@@ -272,6 +279,7 @@ class GameTile(Sprite):
         return self.image.get_rect(center=self.center_position)
 
     def reveal(self):
+        self.game_data.timer_start()
         if self.state == TileState.HIDDEN:
             self.state = TileState.REVEALED
 
