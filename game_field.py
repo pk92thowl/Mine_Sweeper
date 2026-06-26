@@ -9,7 +9,7 @@ from pathlib import Path
 import random
 import math
 
-from game_data import GameData
+#from game_data import GameData
 
 
 GRID_SIZE = 10  # board size in num tiles
@@ -49,7 +49,7 @@ class GameTile(Sprite):
     """
     _shadow_mask = None
 
-    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], text, game_data: GameData = None, action=None):
+    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], text, game_data = None, action=None):
         self.center_position = center_position
         self.tile_position = tile_position
         self.game_data = game_data
@@ -325,7 +325,7 @@ class GameTile(Sprite):
 
 
 class Game_Board:
-    def __init__(self, game_data: GameData = None):
+    def __init__(self, game_data = None):
         self.game_data = game_data
 
         self.board = self._generate_board()

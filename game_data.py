@@ -4,6 +4,8 @@ from enum import Enum
 # from pygame.locals import QUIT
 import time
 
+from game_field import Game_Board
+
 DEFAULT_DISPLAY_WIDTH = 1500
 DEFAULT_DISPLAY_HEIGHT = 1000
 
@@ -33,6 +35,8 @@ class GameData:
     _timer_run = False
     game_duration: float = 0
 
+    game_board: Game_Board = None
+
     def init(self):
         self.display = pygame.display.set_mode(
             (DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
@@ -41,6 +45,18 @@ class GameData:
         self.display_buffer = pygame.Surface(
             (DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT))
         self.game_state = GameState.NEWGAME
+
+        self.create_new_board()
+
+    def create_new_board(self):
+        self.game_board = Game_Board(game_data=self)
+
+    def start_new_game(self):
+        self.game_duration = 0
+        self.create_new_board()
+        self.game_state = GameState.NEWGAME
+
+        # save score
 
     def timer_start(self):
         if self._timer_run == False:

@@ -7,7 +7,7 @@ from pygame.locals import QUIT
 from enum import Enum
 
 from buttons import Button, ButtonActions
-from ui_box import UI_BOX
+from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX
 from game_data import GameData, GameState
 from game_field import Game_Board
 
@@ -92,7 +92,7 @@ def play_level():
         # return_btn
     ]
 
-    ui_count_flags = UI_BOX(
+    ui_count_flags = UI_STAT_BOX(
         rect=Rect(game_data.display_buffer.get_width()/2-(160/2), 50, 160, 50),
         font_name="Courier",
         font_size=20,
@@ -105,7 +105,7 @@ def play_level():
         game_data=game_data
     )
     
-    ui_count_bombs = UI_BOX(
+    ui_count_bombs = UI_STAT_BOX(
         rect=Rect(200, 50, 150, 50),
         font_name="Courier",
         font_size=20,
@@ -120,7 +120,7 @@ def play_level():
     )
 
 
-    ui_timer = UI_BOX(
+    ui_timer = UI_STAT_BOX(
         rect=Rect(500, 50, 150, 50),
         font_name="Courier",
         font_size=20,
@@ -134,13 +134,16 @@ def play_level():
         align_relative_to=(ui_count_flags, 1)
     )
 
-    ui_boxes = [ui_count_bombs, ui_count_flags, ui_timer]
+    win_lose_ui_popup = UI_POPUP_BOX(
+        w = 400,
+        h = 400,
+        font_size=42,
+        game_data=game_data
+    )
 
-    game_board = Game_Board(game_data=game_data)
+    ui_boxes = [ui_count_bombs, ui_count_flags, ui_timer, win_lose_ui_popup]
 
-    # time_start = time.time()
-    # while game_data.game_state != GameState.QUIT:
-    while game_data.game_state == GameState.NEWGAME:
+    while game_data.game_state != GameState.QUIT:
         game_data.update()
 
         # Handle Buttons
@@ -150,10 +153,12 @@ def play_level():
                 game_data.game_state = ui_action
             button.draw()
 
-        ui_count_bombs.set_text(f"x{game_board.num_bombs}")
-        ui_count_flags.set_text(f"x{game_board.num_flags}")
+        ui_count_bombs.set_text(f"x{game_data.game_board.num_bombs}")
+        ui_count_flags.set_text(f"x{game_data.game_board.num_flags}")
         # ui_timer.set_text(f"{int(time.time()-time_start)}s")
         ui_timer.set_text(f"{game_data.game_duration:.2f}s")
+
+        game_data.game_board.update()
 
         for ui_box in ui_boxes:
             ui_box.draw_to()
@@ -161,16 +166,29 @@ def play_level():
         # draw game field
         # each game tile is like a button
 
-        game_board.update()
 
-        print(game_board.game_won, game_board.game_over)
-        if game_board.game_over or game_board.game_won:
+        print(game_data.game_board.game_won, game_data.game_board.game_over)
+        if game_data.game_board.game_over or game_data.game_board.game_won:
             game_data.timer_stop()
+            win_lose_ui_popup.set_text(f"{'You Win' if game_data.game_board.game_won else 'You Lose'}")
+            win_lose_ui_popup.show()
+
         #     game_data.game_state = GameState.GAMEOVER
         # if game_board.game_won:
         #     game_data.game_state = GameState.GAMEOVER
 
-        # Scale tile texture to window size
+
+        # print(
+        #     game_data.display_buffer,
+        #     game_data.display_buffer.get_rect(),
+        #     game_data.display_buffer.get_rect().width,
+        #     game_data.display_buffer.get_rect().height,
+        #     game_data.display_scaling_factor,
+        #     game_data.display_buffer.get_rect().width * game_data.display_scaling_factor,
+        #     game_data.display_buffer.get_rect().height * game_data.display_scaling_factor,
+        # )
+
+        # Scale buffer to window size
         game_data.display_buffer = pygame.transform.scale(
             game_data.display_buffer,
             (
@@ -179,16 +197,7 @@ def play_level():
             )
         )
 
-        print(
-            game_data.display_buffer,
-            game_data.display_buffer.get_rect(),
-            game_data.display_buffer.get_rect().width,
-            game_data.display_buffer.get_rect().height,
-            game_data.display_scaling_factor,
-            game_data.display_buffer.get_rect().width * game_data.display_scaling_factor,
-            game_data.display_buffer.get_rect().height * game_data.display_scaling_factor,
-        )
-
+        # Draw buffer to window
         game_data.display.blit(game_data.display_buffer,
                                game_data.display_buffer.get_rect())
 
