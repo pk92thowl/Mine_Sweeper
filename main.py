@@ -6,6 +6,7 @@ from pygame.rect import Rect
 from pygame.locals import QUIT
 from enum import Enum
 
+import colors
 from buttons import Button, ButtonActions
 from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX
 from game_data import GameData, GameState
@@ -135,9 +136,9 @@ def play_level():
     )
 
     win_lose_ui_popup = UI_POPUP_BOX(
-        w = 400,
-        h = 400,
-        font_size=42,
+        w = 600,
+        h = 600,
+        font_size=64,
         game_data=game_data
     )
 
@@ -171,6 +172,9 @@ def play_level():
         if game_data.game_board.game_over or game_data.game_board.game_won:
             game_data.timer_stop()
             win_lose_ui_popup.set_text(f"{'You Win' if game_data.game_board.game_won else 'You Lose'}")
+            win_lose_ui_popup.set_text_color(
+                colors.GREEN if game_data.game_board.game_won else colors.RED
+            )
             win_lose_ui_popup.show()
 
         #     game_data.game_state = GameState.GAMEOVER

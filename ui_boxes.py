@@ -144,7 +144,8 @@ class UI_STAT_BOX(Sprite):
 
 class UI_POPUP_BOX(Sprite):
     def __init__(self, w, h, font_name="Courier", font_size=20,
-                 border_color=colors.UI_BORDER, padding=10,
+                 border_color=colors.TRANSPARENT, padding=10,
+                 color_text=colors.BLACK,
                  game_data: GameData = None
                  ):
         super().__init__()
@@ -152,13 +153,14 @@ class UI_POPUP_BOX(Sprite):
         self.w = w
         self.h = h
 
+        self.color_bg = colors.TRANSPARENT
         self.border_color = border_color
         self.outer_border_width = 2
         self.padding = padding
 
         # font + text state
         self.font = pygame.freetype.SysFont(font_name, font_size, bold=False)
-        self.text_color = colors.BLACK
+        self.text_color = color_text
         self._text = ""
         self._cached_surface = None
         self._dirty = True  # mark to (re)render cached surface
@@ -179,6 +181,11 @@ class UI_POPUP_BOX(Sprite):
             self._text = text
             self._dirty = True
 
+    def set_text_color(self, color):
+        if color != self.text_color:
+            self.text_color = color
+            self._dirty = True
+
     def _render_text_surface(self):
         if self._text == "":
             return None
@@ -193,7 +200,7 @@ class UI_POPUP_BOX(Sprite):
         surf = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
 
         # background
-        pygame.draw.rect(surf, colors.GREY_LIGHT, (0, 0, self.w, self.h))
+        pygame.draw.rect(surf, self.color_bg, (0, 0, self.w, self.h))
 
         # right inner area
         # inner = pygame.Rect(
