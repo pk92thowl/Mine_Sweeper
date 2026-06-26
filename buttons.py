@@ -90,6 +90,9 @@ class Button(Sprite):
         else:
             self._mouse_over = False
 
-    def draw(self):
+    def draw(self, target_surface: pygame.Surface = None):
         """ Draws element onto a surface """
-        self.game_data.screen.blit(self.image, self.rect)
+        if target_surface is None:
+            target_surface = self.game_data.display_buffer
+
+        target_surface.blit(self.image, self.rect)

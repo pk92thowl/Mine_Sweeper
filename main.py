@@ -7,7 +7,7 @@ from pygame.locals import QUIT
 from enum import Enum
 
 from buttons import Button, ButtonActions
-from ui_box import UI_BOX
+from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX
 from game_data import GameData, GameState
 from game_field import Game_Board
 
@@ -15,18 +15,13 @@ from game_field import Game_Board
 BLUE = (106, 159, 181)
 WHITE = (255, 255, 255)
 
-display_width = 1000
-display_height = 800
-
 game_data = GameData()
 
 
 def main():
     pygame.init()
 
-    game_data.screen = pygame.display.set_mode((display_width, display_height))
-    # screen = pygame.display.set_mode((display_width, display_height))
-    game_data.game_state = GameState.NEWGAME
+    game_data.init()
 
     while game_data.game_state != GameState.QUIT:
         if game_data.game_state == GameState.TITLE:
@@ -82,19 +77,35 @@ def title_screen():
 
 
 def play_level():
-    return_btn = Button(
-        center_position=(display_width/2, display_height - 30),
+    # return_btn = Button(
+    #     center_position=(game_data.display_buffer.get_width()/2,
+    #                      game_data.display_buffer.get_height() - 30),
+    #     font_size=20,
+    #     bg_rgb=BLUE,
+    #     text_rgb=WHITE,
+    #     text="Return to main menu",
+    #     action=GameState.TITLE,
+    #     game_data=game_data
+    # )
+
+    buttons = [
+        # return_btn
+    ]
+
+    ui_count_flags = UI_STAT_BOX(
+        rect=Rect(game_data.display_buffer.get_width()/2-(160/2), 50, 160, 50),
+        font_name="Courier",
         font_size=20,
-        bg_rgb=BLUE,
-        text_rgb=WHITE,
-        text="Return to main menu",
-        action=GameState.TITLE,
+        image_path="assets/flag.png",
+        outer_color=(180, 180, 180),
+        outer_border=(120, 120, 120),
+        left_bg=(160, 160, 160),
+        right_bg=(255, 255, 255),
+        padding=10,
         game_data=game_data
     )
-
-    buttons = [return_btn]
-
-    ui_count_bombs = UI_BOX(
+    
+    ui_count_bombs = UI_STAT_BOX(
         rect=Rect(200, 50, 150, 50),
         font_name="Courier",
         font_size=20,
@@ -104,46 +115,36 @@ def play_level():
         left_bg=(160, 160, 160),
         right_bg=(255, 255, 255),
         padding=10,
-        game_data=game_data
+        game_data=game_data,
+        align_relative_to=(ui_count_flags, 3)
     )
 
-    ui_count_flags = UI_BOX(
-        rect=Rect(350, 50, 150, 50),
-        font_name="Courier",
-        font_size=20,
-        image_path="assets/flag.png",
-        outer_color=(180, 180, 180),
-        outer_border=(120, 120, 120),
-        left_bg=(160, 160, 160),
-        right_bg=(255, 255, 255),
-        padding=10,
-        game_data=game_data
-    )
 
-    ui_timer = UI_BOX(
+    ui_timer = UI_STAT_BOX(
         rect=Rect(500, 50, 150, 50),
         font_name="Courier",
         font_size=20,
-        image_path="assets/flag.png",
+        image_path="assets/stop_watch.png",
         outer_color=(180, 180, 180),
         outer_border=(120, 120, 120),
         left_bg=(160, 160, 160),
         right_bg=(255, 255, 255),
         padding=10,
+        game_data=game_data,
+        align_relative_to=(ui_count_flags, 1)
+    )
+
+    win_lose_ui_popup = UI_POPUP_BOX(
+        w = 400,
+        h = 400,
+        font_size=42,
         game_data=game_data
     )
 
-    ui_boxes = [ui_count_bombs, ui_count_flags, ui_timer]
+    ui_boxes = [ui_count_bombs, ui_count_flags, ui_timer, win_lose_ui_popup]
 
-    game_board = Game_Board(display_width, display_height,
-                            game_data=game_data)
-
-    time_start = time.time()
-    # while game_data.game_state != GameState.QUIT:
-    while game_data.game_state == GameState.NEWGAME:
+    while game_data.game_state != GameState.QUIT:
         game_data.update()
-
-        game_data.screen.fill(BLUE)
 
         # Handle Buttons
         for button in buttons:
@@ -152,9 +153,12 @@ def play_level():
                 game_data.game_state = ui_action
             button.draw()
 
-        ui_count_bombs.set_text(f"x{game_board.num_bombs}")
-        ui_count_flags.set_text(f"x{game_board.num_flags}")
-        ui_timer.set_text(f"{int(time.time()-time_start)}s")
+        ui_count_bombs.set_text(f"x{game_data.game_board.num_bombs}")
+        ui_count_flags.set_text(f"x{game_data.game_board.num_flags}")
+        # ui_timer.set_text(f"{int(time.time()-time_start)}s")
+        ui_timer.set_text(f"{game_data.game_duration:.2f}s")
+
+        game_data.game_board.update()
 
         for ui_box in ui_boxes:
             ui_box.draw_to()
@@ -162,15 +166,40 @@ def play_level():
         # draw game field
         # each game tile is like a button
 
-        game_board.update()
 
-        # print(game_board.game_won, game_board.game_over)
-        if game_board.game_over:
-            game_data.game_state = GameState.GAMEOVER
-        if game_board.game_won:
-            game_data.game_state = GameState.GAMEOVER
+        print(game_data.game_board.game_won, game_data.game_board.game_over)
+        if game_data.game_board.game_over or game_data.game_board.game_won:
+            game_data.timer_stop()
+            win_lose_ui_popup.set_text(f"{'You Win' if game_data.game_board.game_won else 'You Lose'}")
+            win_lose_ui_popup.show()
 
-        # print(game_data.game_state)
+        #     game_data.game_state = GameState.GAMEOVER
+        # if game_board.game_won:
+        #     game_data.game_state = GameState.GAMEOVER
+
+
+        # print(
+        #     game_data.display_buffer,
+        #     game_data.display_buffer.get_rect(),
+        #     game_data.display_buffer.get_rect().width,
+        #     game_data.display_buffer.get_rect().height,
+        #     game_data.display_scaling_factor,
+        #     game_data.display_buffer.get_rect().width * game_data.display_scaling_factor,
+        #     game_data.display_buffer.get_rect().height * game_data.display_scaling_factor,
+        # )
+
+        # Scale buffer to window size
+        game_data.display_buffer = pygame.transform.scale(
+            game_data.display_buffer,
+            (
+                game_data.display_buffer.get_rect().width * game_data.display_scaling_factor,
+                game_data.display_buffer.get_rect().height * game_data.display_scaling_factor
+            )
+        )
+
+        # Draw buffer to window
+        game_data.display.blit(game_data.display_buffer,
+                               game_data.display_buffer.get_rect())
 
         pygame.display.flip()
 

@@ -9,117 +9,22 @@ from pathlib import Path
 import random
 import math
 
-from game_data import GameData
+#from game_data import GameData
 
 
-NUM_BOMBS = 10
-GRID_SIZE = 10
-TILE_SIZE = 64
+GRID_SIZE = 10  # board size in num tiles
+NUM_BOMBS = int(GRID_SIZE*GRID_SIZE*0.1)
+DEFAULT_TILE_SIZE = int(800/GRID_SIZE)  # tile size in px
 
 FONT_SIZE = 36
 COLOR_BG = (106, 159, 181)
 COLOR_TEXT = (0, 0, 255)
 COLOR_TEXT_HIGHLIGHT = (255, 0, 0)
 
-HOVER_OVERLAY = pygame.Surface((TILE_SIZE, TILE_SIZE), pygame.SRCALPHA)
+# TODO change so its scaled
+HOVER_OVERLAY = pygame.Surface(
+    (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE), pygame.SRCALPHA)
 HOVER_OVERLAY.fill((0, 0, 0, 20))  # alpha 0..255; adjust for darkness
-
-
-# def _make_dip_overlay_mask(size, dark_alpha=180, highlight_alpha=80, directions=None):
-#     """
-
-#     Parameters
-#     ----------
-#     size : _type_
-#         _description_
-#     dark_alpha : int, optional
-#         _description_, by default 180
-#     highlight_alpha : int, optional
-#         _description_, by default 80
-#     directions : _type_, optional
-#             1 = right
-#             2 = down
-#             3 = left
-#             4 = up
-
-
-#     Returns
-#     -------
-#     _type_
-#         _description_
-#     """
-#     w, h = size
-#     mask = pygame.Surface((w, h), pygame.SRCALPHA)
-
-#     cx, cy = w//2, h//2
-#     max_r = min(cx, cy)
-
-#     for y in range(h):
-#         for x in range(w):
-#             dx, dy = x-cx, y-cy
-#             r = math.hypot(dx, dy) / max_r  # 0..1
-#             # darkening stronger near center (use r^2 for steeper falloff)
-#             a = int(dark_alpha * (1 - r*r))
-#             if a > 0:
-#                 mask.set_at((x, y), (0, 0, 0, a))
-
-#     directions = [1, 2]
-#     if directions is not None:
-#         for y in range(h):
-#             for x in range(w):
-#                 d = max_r
-#                 if 1 in directions:
-#                     if x >= cx:
-#                         d = min(d, abs(cy - y))
-
-#                 if 3 in directions:
-#                     if x <= cx:
-#                         d = min(d, abs(cy - y))
-
-#                 if 2 in directions:
-#                     if y >= cy:
-#                         d = min(d, abs(cx - x))
-
-#                 if 4 in directions:
-#                     if y <= cy:
-#                         d = min(d, abs(cx - x))
-
-#                 d = d / max_r
-#                 a = int(dark_alpha * (1-d*d))
-
-#                 if a > 0:
-#                     old = mask.get_at((x, y))
-#                     new_a = max(min(255, a), old.a)
-#                     mask.set_at(
-#                         (x, y), (old.r, old.g, old.b, new_a)
-#                     )
-#                     # mask.set_at((x, y), (0, 0, 0, a))
-
-#     # optional rim highlight: small blurred white ring near top-left of dip
-#     # for y in range(h):
-#     #     for x in range(w):
-#     #         dx, dy = x-(cx-6), y-(cy-6)  # offset highlight to simulate light
-#     #         r = math.hypot(dx, dy) / max_r
-#     #         if 0.6 < r < 0.95:
-#     #             ha = int(highlight_alpha * (1 - (r-0.6)/0.35))
-#     #             if ha > 0:
-#     #                 old = mask.get_at((x, y))
-#     #                 # lighter by reducing black alpha slightly (blend)
-#     #                 new_a = max(min(255, old.a - ha),0)
-
-#     #                 print(old.a, ha, old.a - ha, new_a)
-
-#     #                 mask.set_at(
-#     #                     (x, y), (old.r, old.g, old.b, new_a)
-#     #                     )
-
-#     #     print("end")
-
-#     return mask
-
-
-# DIP_OVERLAY = _make_dip_overlay_mask(
-#     (TILE_SIZE, TILE_SIZE), dark_alpha=140, highlight_alpha=10)
 
 
 class TileState(Enum):
@@ -129,7 +34,7 @@ class TileState(Enum):
 
 
 class GameTile(Sprite):
-    """ An user interface element that can be added to a surface """
+    """ A user interface element that can be added to a surface """
     center_position: tuple[int, int]
     """pygame coordinates"""
 
@@ -144,7 +49,7 @@ class GameTile(Sprite):
     """
     _shadow_mask = None
 
-    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], text, game_data: GameData = None, action=None):
+    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], text, game_data = None, action=None):
         self.center_position = center_position
         self.tile_position = tile_position
         self.game_data = game_data
@@ -159,6 +64,7 @@ class GameTile(Sprite):
         # Options: " " for safe tile, "f" for flagged tile, "m" for mine tile, digit for number of adjacent mines
         self.content = text
         self._base_image = None
+        """Tile base texture (randomized on create)"""
         self._image_cache = None
         self._image_cache_dirty = True
 
@@ -197,7 +103,7 @@ class GameTile(Sprite):
             _description_
         """
 
-        size = (TILE_SIZE, TILE_SIZE)
+        size = (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE)
         dark_alpha = 140
         highlight_alpha = 10
 
@@ -280,7 +186,12 @@ class GameTile(Sprite):
 
         elif self.state == TileState.FLAGGED:
             flag_img = pygame.image.load(
-                Path("assets/flag.png")).convert_alpha()
+                Path("assets/flag.png")
+            ).convert_alpha()
+            flag_img = pygame.transform.scale(
+                flag_img,
+                (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE)
+            )
             image.blit(flag_img, (0, 0))
 
         elif self.state == TileState.REVEALED:
@@ -292,20 +203,38 @@ class GameTile(Sprite):
             if self.content == 'm':
                 mine_img = pygame.image.load(
                     Path("assets/mine_2.png")).convert_alpha()
-                mine_img = pygame.transform.scale(mine_img, (40, 40))
+                mine_img = pygame.transform.scale(
+                    mine_img,
+                    (DEFAULT_TILE_SIZE*0.75, DEFAULT_TILE_SIZE*0.75)
+                )
+
                 image.blit(
                     mine_img,
-                    mine_img.get_rect(center=(TILE_SIZE/2, TILE_SIZE/2))
+                    mine_img.get_rect(
+                        center=(DEFAULT_TILE_SIZE / 2, DEFAULT_TILE_SIZE / 2))
                 )
 
             else:
                 if isinstance(self.content, int) and self.content > 0:
                     font = pygame.freetype.SysFont(
-                        "Courier", FONT_SIZE, bold=True)
+                        "Courier",
+                        FONT_SIZE,
+                        bold=True
+                    )
+
                     text_img, _ = font.render(
-                        text=str(self.content), fgcolor=COLOR_TEXT, bgcolor=None)
+                        text=str(self.content),
+                        fgcolor=COLOR_TEXT,
+                        bgcolor=None
+                    )
+
+                    text_img = pygame.transform.scale(
+                        text_img,
+                        (DEFAULT_TILE_SIZE*0.5, DEFAULT_TILE_SIZE*0.5)
+                    )
+
                     text_rect = text_img.get_rect(
-                        center=(TILE_SIZE/2, TILE_SIZE/2))
+                        center=(DEFAULT_TILE_SIZE / 2, DEFAULT_TILE_SIZE / 2))
 
                     image.blit(text_img, text_rect)
 
@@ -317,13 +246,16 @@ class GameTile(Sprite):
         # text_rect = text_img.get_rect(bottomright=(TILE_SIZE, TILE_SIZE))
 
         # image.blit(text_img, text_rect)
-
         self._image_cache = image
 
     def _get_base_image(self):
         if self._base_image is None:
             image_path: Path = Path("assets/sand_2.png")
             self._base_image = pygame.image.load(image_path).convert_alpha()
+            self._base_image = pygame.transform.scale(
+                self._base_image,
+                (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE)
+            )
 
             if random.randint(0, 1) == 0:
                 self._base_image = pygame.transform.rotate(
@@ -333,14 +265,7 @@ class GameTile(Sprite):
 
     @property
     def image(self):
-        # image_tuple = self._images[
-        #     self.state
-        # ]
-
-        # image = image_tuple[0].copy()
-        # # image = image_tuple[1] if self._mouse_over else image_tuple[0]
-
-        if self._image_cache_dirty or self._image_cache is None:
+        if self._image_cache_dirty or self._image_cache is None or self.game_data.display_rescaled:
             self._generate_image()
             self._image_cache_dirty = False
 
@@ -354,6 +279,7 @@ class GameTile(Sprite):
         return self.image.get_rect(center=self.center_position)
 
     def reveal(self):
+        self.game_data.timer_start()
         if self.state == TileState.HIDDEN:
             self.state = TileState.REVEALED
 
@@ -389,25 +315,28 @@ class GameTile(Sprite):
         else:
             self._mouse_over = False
 
-    def draw(self):
+    def draw(self, target_surface: pygame.Surface = None):
         """ Draws element onto a surface """
-        self.game_data.screen.blit(self.image, self.rect)
+
+        self.game_data.display_buffer.blit(self.image, self.rect)
 
         if self._mouse_over:
-        # if self.rect.collidepoint(self.game_data.mouse_pos):
-            self.game_data.screen.blit(HOVER_OVERLAY, self.rect)
+            self.game_data.display_buffer.blit(HOVER_OVERLAY, self.rect)
 
 
 class Game_Board:
-    def __init__(self, display_width, display_height, game_data: GameData = None):
-
-        self.display_width = display_width
-        self.display_height = display_height
+    def __init__(self, game_data = None):
         self.game_data = game_data
 
         self.board = self._generate_board()
         self.tiles = self._generate_board_tiles()
         self._tile_group = pygame.sprite.Group(self.tiles)
+        self.board_surface: pygame.Surface = pygame.Surface(
+            (
+                DEFAULT_TILE_SIZE*GRID_SIZE,
+                DEFAULT_TILE_SIZE*GRID_SIZE
+            )
+        )
 
         self.num_bombs = NUM_BOMBS
         self.num_flags = 0
@@ -455,9 +384,11 @@ class Game_Board:
     def _generate_board_tiles(self):
         tiles: list[GameTile] = []
 
-        board_width = TILE_SIZE * GRID_SIZE
-        board_start_x = (self.display_width - board_width) / 2
-        board_start_y = (self.display_height - board_width) / 2
+        board_width = DEFAULT_TILE_SIZE * GRID_SIZE
+        board_start_x = (
+            self.game_data.display_buffer.get_width() - board_width) / 2
+        board_start_y = (
+            self.game_data.display_buffer.get_height() - board_width) / 2
 
         for y in range(len(self.board)):
             for x in range(len(self.board[y])):
@@ -465,8 +396,8 @@ class Game_Board:
                 tiles.append(
                     GameTile(
                         center_position=(
-                            x*TILE_SIZE + TILE_SIZE/2 + board_start_x,
-                            y*TILE_SIZE + TILE_SIZE/2 + board_start_y
+                            x * DEFAULT_TILE_SIZE + DEFAULT_TILE_SIZE / 2 + board_start_x,
+                            y * DEFAULT_TILE_SIZE + DEFAULT_TILE_SIZE / 2 + board_start_y
                         ),
                         tile_position=(x, y),
                         text=self.board[y][x],
@@ -494,9 +425,16 @@ class Game_Board:
             if tile.state == TileState.FLAGGED:
                 self.num_flags += 1
 
+        # Scale tile texture to window size
+        # image = pygame.transform.scale(
+        #     image,
+        #     (
+        #         DEFAULT_TILE_SIZE * self.game_data.display_scaling_factor,
+        #         DEFAULT_TILE_SIZE * self.game_data.display_scaling_factor)
+        # )
         # self._tile_group.draw(self.game_data.screen)
 
-    def _update_shadows(self, tile:GameTile):
+    def _update_shadows(self, tile: GameTile):
         "Updates the shadows of tile's neighbours"
         # update cardinal neighbours shadow mask
         offsets = [
