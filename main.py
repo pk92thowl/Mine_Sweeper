@@ -144,6 +144,9 @@ def play_level():
 
     ui_boxes = [ui_count_bombs, ui_count_flags, ui_timer, win_lose_ui_popup]
 
+    win_lose_ui_popup.show()
+    win_lose_ui_popup.set_text("test")
+
     while game_data.game_state != GameState.QUIT:
         game_data.update()
 

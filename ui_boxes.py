@@ -167,14 +167,17 @@ class UI_POPUP_BOX(Sprite):
 
         self._visible = False
 
-        # self.restart_button = Button(
-        #     game_data=game_data,
-        #     center_position=(self.w/2, h-20),
-        #     text="Restart",
-        #     font_size=font_size,
-        #     text_rgb=colors.WHITE,
-        #     bg_rgb=colors.GREY,
-        # )
+        self.restart_button = Button(
+            game_data=game_data,
+            center_position=(
+                self.game_data.display_buffer.get_rect().centerx,
+                self.game_data.display_buffer.get_rect().centery+h/2 -40
+            ),
+            text="Restart",
+            font_size=font_size,
+            text_rgb=colors.BLACK,
+            bg_rgb=colors.GREY,
+        )
 
     def set_text(self, text):
         if text != self._text:
@@ -240,7 +243,9 @@ class UI_POPUP_BOX(Sprite):
     def update(self, *args, **kwargs):
         # call this each frame (or only when necessary). It will refresh cached surface if dirty.
         # self._update_cached_surface_if_needed()
-        pass
+
+        if self._visible:
+            self.restart_button.update2()
 
     # Optional convenience draw when not using sprite groups:
     def draw_to(self):
@@ -254,6 +259,9 @@ class UI_POPUP_BOX(Sprite):
                 )
             )
 
+            self.restart_button.draw()
+
+
             print(
                 self.rect,
                 self._visible,
@@ -264,5 +272,7 @@ class UI_POPUP_BOX(Sprite):
                 " ",
                 self.game_data.display_buffer.get_rect().centery,
                 self.rect.height / 2,
-                self.game_data.display_buffer.get_rect().centery - self.rect.height / 2
+                self.game_data.display_buffer.get_rect().centery - self.rect.height / 2,
+                "",
+                self.restart_button.rect
             )
