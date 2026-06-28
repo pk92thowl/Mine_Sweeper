@@ -4,6 +4,7 @@ from enum import Enum
 # from pygame.locals import QUIT
 import time
 
+from game_states import GameState
 from game_field import Game_Board
 
 DEFAULT_DISPLAY_WIDTH = 1500
@@ -12,13 +13,6 @@ DEFAULT_DISPLAY_HEIGHT = 1000
 BLUE = (106, 159, 181)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-
-
-class GameState(Enum):
-    QUIT = -1
-    TITLE = 0
-    NEWGAME = 1
-    GAMEOVER = 2
 
 
 class GameData:

@@ -113,7 +113,7 @@ def play_level():
                 game_data.game_state = ui_action
             button.draw()
 
-        ui_count_bombs.set_text(f"x{game_data.game_board.num_bombs}")
+        ui_count_bombs.set_text(f"x{game_data.game_board.NUM_BOMBS}")
         ui_count_flags.set_text(f"x{game_data.game_board.num_flags}")
         # ui_timer.set_text(f"{int(time.time()-time_start)}s")
         ui_timer.set_text(f"{game_data.game_duration:.2f}s")
