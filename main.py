@@ -8,9 +8,9 @@ from enum import Enum
 
 import colors
 from buttons import Button, ButtonActions
-from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX
+from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR, UI_SCOREBOARD
 from game_data import GameData, GameState
-from game_field import Game_Board
+from game_field import DEFAULT_BOARD_SIZE
 
 BLUE = (106, 159, 181)
 WHITE = (255, 255, 255)
@@ -53,21 +53,19 @@ def play_level():
         # return_btn
     ]
 
-    ui_count_flags = UI_STAT_BOX(
-        rect=Rect(game_data.display_buffer.get_width() / 2 - (160 / 2), 50, 160, 50),
-        font_name="Courier",
-        font_size=20,
-        image_path="assets/flag.png",
-        outer_color=(180, 180, 180),
-        outer_border=(120, 120, 120),
-        left_bg=(160, 160, 160),
-        right_bg=(255, 255, 255),
-        padding=10,
-        game_data=game_data
-    )
+    # --- Statusleiste zentriert über dem Spielfeld ---
+    BOX_H = 50
+    GAP_TO_BOARD = 10  # kleine Lücke zwischen UI und Spielbrett
+
+    W_BOMBS, W_FLAGS, W_TIMER, W_DIFF = 150, 160, 200, 160
+    total_w = W_BOMBS + W_FLAGS + W_TIMER + W_DIFF
+
+    board_top = (game_data.display_buffer.get_height() - DEFAULT_BOARD_SIZE) / 2
+    bar_y = board_top - BOX_H - GAP_TO_BOARD
+    bar_x = (game_data.display_buffer.get_width() - total_w) / 2
 
     ui_count_bombs = UI_STAT_BOX(
-        rect=Rect(200, 50, 150, 50),
+        rect=Rect(bar_x, bar_y, W_BOMBS, BOX_H),
         font_name="Courier",
         font_size=20,
         image_path="assets/mine_2.png",
@@ -76,12 +74,25 @@ def play_level():
         left_bg=(160, 160, 160),
         right_bg=(255, 255, 255),
         padding=10,
+        game_data=game_data
+    )
+
+    ui_count_flags = UI_STAT_BOX(
+        rect=Rect(0, bar_y, W_FLAGS, BOX_H),
+        font_name="Courier",
+        font_size=20,
+        image_path="assets/flag.png",
+        outer_color=(180, 180, 180),
+        outer_border=(120, 120, 120),
+        left_bg=(160, 160, 160),
+        right_bg=(255, 255, 255),
+        padding=10,
         game_data=game_data,
-        align_relative_to=(ui_count_flags, 3)
+        align_relative_to=(ui_count_bombs, 1)  # rechts neben Bomben
     )
 
     ui_timer = UI_STAT_BOX(
-        rect=Rect(500, 50, 150, 50),
+        rect=Rect(0, bar_y, W_TIMER, BOX_H),
         font_name="Courier",
         font_size=20,
         image_path="assets/stop_watch.png",
@@ -94,21 +105,48 @@ def play_level():
         align_relative_to=(ui_count_flags, 1)
     )
 
+    ui_difficulty = UI_DIFFICULTY_SELECTOR(
+        rect=Rect(0, bar_y, W_DIFF, BOX_H),
+        font_name="Courier",
+        font_size=20,
+        game_data=game_data,
+        align_relative_to=(ui_timer, 1)
+    )
+
+    # Scoreboard links neben dem Spielfeld
+    # (Board ist 800px breit und zentriert -> linker Rand hat ~350px Platz)
+    ui_scoreboard = UI_SCOREBOARD(
+        rect=Rect(30, 150, 290, 260),
+        font_name="Courier",
+        font_size=18,
+        game_data=game_data
+    )
+
     win_lose_ui_popup = UI_POPUP_BOX(
-        w = 400,
-        h = 150,
+        w=400,
+        h=150,
         font_size=64,
         game_data=game_data
     )
 
-    ui_boxes:list[Sprite] = [ui_count_bombs, ui_count_flags, ui_timer, win_lose_ui_popup]
+    ui_boxes: list[Sprite] = [
+        ui_count_bombs,
+        ui_count_flags,
+        ui_timer,
+        ui_difficulty,
+        ui_scoreboard,
+        win_lose_ui_popup,
+    ]
 
     # win_lose_ui_popup.show()
     # win_lose_ui_popup.set_text("test")
     # game_data.game_state = GameState.GAMEOVER
-    
+
     # game_data.game_board.game_over = True
 
+    clock = pygame.time.Clock()
+    fps_min = 1000
+    fps_max = 0
     while game_data.game_state != GameState.QUIT:
         game_data.update()
         
@@ -119,7 +157,7 @@ def play_level():
                 game_data.game_state = ui_action
             button.draw()
 
-        ui_count_bombs.set_text(f"x{game_data.game_board.num_bombs}")
+        ui_count_bombs.set_text(f"x{game_data.game_board.NUM_BOMBS}")
         ui_count_flags.set_text(f"x{game_data.game_board.num_flags}")
         # ui_timer.set_text(f"{int(time.time()-time_start)}s")
         ui_timer.set_text(f"{game_data.game_duration:.2f}s")
@@ -127,28 +165,24 @@ def play_level():
         game_data.game_board.update()
 
         for ui_box in ui_boxes:
+            ui_box.update()
             ui_box.draw_to()
             ui_box.update()
 
         # draw game field
         # each game tile is like a button
 
-
-        
         if game_data.game_board.game_over or game_data.game_board.game_won:
-            game_data.timer_stop()
-            win_lose_ui_popup.set_text(f"{'You Win' if game_data.game_board.game_won else 'You Lose'}")
+            
+            win_lose_ui_popup.set_text(
+                f"{'You Win' if game_data.game_board.game_won else 'You Lose'}"
+            )
             win_lose_ui_popup.set_text_color(
                 colors.GREEN if game_data.game_board.game_won else colors.RED
             )
             win_lose_ui_popup.show()
         else:
             win_lose_ui_popup.hide()
-            
-
-        #     game_data.game_state = GameState.GAMEOVER
-        # if game_board.game_won:
-        #     game_data.game_state = GameState.GAMEOVER
 
         # print(
         #     game_data.display_buffer,
@@ -174,6 +208,15 @@ def play_level():
                                game_data.display_buffer.get_rect())
 
         pygame.display.flip()
+
+        clock.tick()
+        fps = clock.get_fps().__round__(2)
+        if fps < fps_min and fps != 0:
+            fps_min = fps
+        
+        if fps > fps_max:
+            fps_max = fps
+        print(fps, fps_min, fps_max)
 
 
 if __name__ == "__main__":
