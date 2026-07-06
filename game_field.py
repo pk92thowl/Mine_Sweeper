@@ -30,11 +30,14 @@ COLOR_TEXT_HIGHLIGHT = (255, 0, 0)
 
 
 class Game_Board:
-    def __init__(self, game_data: GameData = None, grid_size: int = 10):
+    def __init__(self, game_data: GameData = None, grid_size: int = 10,
+                 num_bombs: int = None):
 
         self.GRID_SIZE = grid_size  # board size in num tiles
-        self.NUM_BOMBS = 2
-        # self.NUM_BOMBS = int(self.GRID_SIZE * self.GRID_SIZE * 0.1)
+        if num_bombs is not None:
+            self.NUM_BOMBS = num_bombs
+        else:
+            self.NUM_BOMBS = int(self.GRID_SIZE * self.GRID_SIZE * 0.1)
         self.TILE_SIZE = int(DEFAULT_BOARD_SIZE /
                              self.GRID_SIZE)  # tile size in px
         self.BOARD_SIZE = self.TILE_SIZE * self.GRID_SIZE

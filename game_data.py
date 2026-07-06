@@ -20,6 +20,13 @@ BLACK = (0, 0, 0)
 
 PATH_SCORE_FILE = Path("scores.json")
 
+# Brettgröße und Bombenanzahl pro Schwierigkeitsstufe
+DIFFICULTY_SETTINGS = {
+    DifficultyLevel.EASY: {"grid_size": 8, "num_bombs": 7},
+    DifficultyLevel.MEDIUM: {"grid_size": 12, "num_bombs": 18},
+    DifficultyLevel.HARD: {"grid_size": 16, "num_bombs": 30},
+}
+
 
 class GameData:
     mouse_pos = (0, 0)
@@ -59,10 +66,16 @@ class GameData:
     # Game
     ####################################################################################################
     def create_new_board(self):
-        self.game_board = Game_Board(game_data=self)
+        settings = DIFFICULTY_SETTINGS[self.difficulty]
+        self.game_board = Game_Board(
+            game_data=self,
+            grid_size=settings["grid_size"],
+            num_bombs=settings["num_bombs"]
+        )
 
     def start_new_game(self):
         self.game_duration = 0
+        self._timer_run = False  # wichtig: sonst werden im neuen Spiel keine Bomben platziert
         self.create_new_board()
         self.game_state = GameState.NEWGAME
 
@@ -94,7 +107,11 @@ class GameData:
                 self._score_data[dl.name] = {}
                 # self.difficulty.name: self.game_duration
 
-        self._score_data[self.difficulty.name][self.player_name] = self.game_duration
+        if self.player_name in self._score_data[self.difficulty.name]:
+            if self.game_duration < self._score_data[self.difficulty.name][self.player_name]:
+                self._score_data[self.difficulty.name][self.player_name] = self.game_duration
+        else:
+            self._score_data[self.difficulty.name][self.player_name] = self.game_duration
 
         with open(PATH_SCORE_FILE, "w") as f:
             json.dump(

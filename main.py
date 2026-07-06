@@ -8,7 +8,7 @@ from enum import Enum
 
 import colors
 from buttons import Button, ButtonActions
-from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX
+from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR
 from game_data import GameData, GameState
 from game_field import Game_Board
 
@@ -100,6 +100,13 @@ def play_level():
     )
 
     # create difficulty selector
+    ui_difficulty = UI_DIFFICULTY_SELECTOR(
+        rect=Rect(0, 45, 160, 50),
+        font_name="Courier",
+        font_size=20,
+        game_data=game_data,
+        align_relative_to=(ui_timer, 1)  # rechts neben dem Timer
+    )
 
     win_lose_ui_popup = UI_POPUP_BOX(
         w=400,
@@ -112,8 +119,8 @@ def play_level():
         ui_count_bombs,
         ui_count_flags,
         ui_timer,
+        ui_difficulty,
         win_lose_ui_popup,
-        # add difficulty selector
     ]
 
     # win_lose_ui_popup.show()
