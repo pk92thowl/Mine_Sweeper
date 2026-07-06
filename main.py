@@ -54,8 +54,12 @@ def play_level():
     ]
 
     ui_count_flags = UI_STAT_BOX(
-        rect=Rect(game_data.display_buffer.get_width() /
-                  2 - (160 / 2), 50, 160, 50),
+        rect=Rect(
+            game_data.display_buffer.get_width() / 2 - (160 / 2),
+            45,
+            160,
+            50
+        ),
         font_name="Courier",
         font_size=20,
         image_path="assets/flag.png",
@@ -68,7 +72,7 @@ def play_level():
     )
 
     ui_count_bombs = UI_STAT_BOX(
-        rect=Rect(200, 50, 150, 50),
+        rect=Rect(200, 45, 150, 50),
         font_name="Courier",
         font_size=20,
         image_path="assets/mine_2.png",
@@ -82,7 +86,7 @@ def play_level():
     )
 
     ui_timer = UI_STAT_BOX(
-        rect=Rect(500, 50, 200, 50),
+        rect=Rect(500, 45, 200, 50),
         font_name="Courier",
         font_size=20,
         image_path="assets/stop_watch.png",
@@ -95,6 +99,8 @@ def play_level():
         align_relative_to=(ui_count_flags, 1)
     )
 
+    # create difficulty selector
+
     win_lose_ui_popup = UI_POPUP_BOX(
         w=400,
         h=150,
@@ -106,7 +112,8 @@ def play_level():
         ui_count_bombs,
         ui_count_flags,
         ui_timer,
-        win_lose_ui_popup
+        win_lose_ui_popup,
+        # add difficulty selector
     ]
 
     # win_lose_ui_popup.show()
@@ -116,6 +123,8 @@ def play_level():
     # game_data.game_board.game_over = True
 
     clock = pygame.time.Clock()
+    fps_min = 1000
+    fps_max = 0
     while game_data.game_state != GameState.QUIT:
         game_data.update()
 
@@ -141,7 +150,7 @@ def play_level():
         # each game tile is like a button
 
         if game_data.game_board.game_over or game_data.game_board.game_won:
-            game_data.timer_stop()
+            
             win_lose_ui_popup.set_text(
                 f"{'You Win' if game_data.game_board.game_won else 'You Lose'}"
             )
@@ -178,7 +187,13 @@ def play_level():
         pygame.display.flip()
 
         clock.tick()
-        print(clock.get_fps())
+        fps = clock.get_fps().__round__(2)
+        if fps < fps_min and fps != 0:
+            fps_min = fps
+        
+        if fps > fps_max:
+            fps_max = fps
+        print(fps, fps_min, fps_max)
 
 
 if __name__ == "__main__":

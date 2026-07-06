@@ -5,8 +5,10 @@ import pygame
 
 # from pygame.locals import QUIT
 import time
+import json
 
-from game_states import GameState
+from pathlib import Path
+from game_states import GameState, DifficultyLevel
 from game_field import Game_Board
 
 DEFAULT_DISPLAY_WIDTH = 1500
@@ -15,6 +17,8 @@ DEFAULT_DISPLAY_HEIGHT = 1000
 BLUE = (106, 159, 181)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+
+PATH_SCORE_FILE = Path("scores.json")
 
 
 class GameData:
@@ -33,6 +37,10 @@ class GameData:
 
     game_board: Game_Board = None
 
+    player_name: str = None
+    difficulty: DifficultyLevel
+    _score_data: dict[str, dict[str, float]] = None
+
     def init(self):
         self.display = pygame.display.set_mode(
             (DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
@@ -42,8 +50,14 @@ class GameData:
             (DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT))
         self.game_state = GameState.NEWGAME
 
+        self.player_name = "test"
+        self.difficulty = DifficultyLevel.EASY
+
         self.create_new_board()
 
+    ####################################################################################################
+    # Game
+    ####################################################################################################
     def create_new_board(self):
         self.game_board = Game_Board(game_data=self)
 
@@ -52,8 +66,9 @@ class GameData:
         self.create_new_board()
         self.game_state = GameState.NEWGAME
 
-        # save score
-
+    ####################################################################################################
+    # Timer
+    ####################################################################################################
     def timer_start(self):
         if self._timer_run == False:
             self._timer_run = True
@@ -62,6 +77,42 @@ class GameData:
     def timer_stop(self):
         self._timer_run = False
 
+        if self.game_board.game_won:
+            self.save_score()
+            # save score
+    ####################################################################################################
+    # Score
+    ####################################################################################################
+
+    def save_score(self):
+        self.load_score()
+
+        # prepare score file if new
+        if self._score_data is None:
+            self._score_data = {}
+            for dl in DifficultyLevel:
+                self._score_data[dl.name] = {}
+                # self.difficulty.name: self.game_duration
+
+        self._score_data[self.difficulty.name][self.player_name] = self.game_duration
+
+        with open(PATH_SCORE_FILE, "w") as f:
+            json.dump(
+                self._score_data,
+                f,
+                indent=4
+            )
+
+    def load_score(self):
+        if PATH_SCORE_FILE.exists():
+            with open(PATH_SCORE_FILE, "r") as f:
+                raw_data = json.load(f)
+                print(raw_data)
+                self._score_data = raw_data
+
+    ####################################################################################################
+    #
+    ####################################################################################################
     def update(self):
 
         # Update Timer if active
@@ -83,9 +134,8 @@ class GameData:
 
         self.display.fill(BLACK)
         self.display_buffer.fill(BLUE)
-        
+
         # print(game_data.game_board.game_won, game_data.game_board.game_over)
-        
 
         for event in pygame.event.get():
             # print(event)

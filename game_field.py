@@ -33,7 +33,8 @@ class Game_Board:
     def __init__(self, game_data: GameData = None, grid_size: int = 10):
 
         self.GRID_SIZE = grid_size  # board size in num tiles
-        self.NUM_BOMBS = int(self.GRID_SIZE * self.GRID_SIZE * 0.1)
+        self.NUM_BOMBS = 2
+        # self.NUM_BOMBS = int(self.GRID_SIZE * self.GRID_SIZE * 0.1)
         self.TILE_SIZE = int(DEFAULT_BOARD_SIZE /
                              self.GRID_SIZE)  # tile size in px
         self.BOARD_SIZE = self.TILE_SIZE * self.GRID_SIZE
@@ -147,6 +148,7 @@ class Game_Board:
 
         if self.game_data.game_state == GameState.NEWGAME:
             if self.game_over or self.game_won:
+                self.game_data.timer_stop()
                 self.game_data.game_state = GameState.GAMEOVER
 
     def _update_shadows(self, tile: GameTile):
