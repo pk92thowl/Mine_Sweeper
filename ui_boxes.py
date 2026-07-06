@@ -251,7 +251,6 @@ class UI_POPUP_BOX(Sprite):
         if self._visible:
             self.restart_button.update()
             if self.restart_button.pressed:
-                print("Restart game")
                 self.game_data.start_new_game()
 
     # Optional convenience draw when not using sprite groups:

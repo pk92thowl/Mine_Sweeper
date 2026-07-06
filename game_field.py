@@ -5,8 +5,6 @@ from pygame import font, sysfont
 from pygame.rect import Rect
 from pygame.sprite import Sprite
 
-from enum import Enum
-from pathlib import Path
 from game_tile import GameTile
 
 import random
@@ -17,6 +15,7 @@ if TYPE_CHECKING:
     from game_data import GameData
 
 from game_states import GameState
+from game_tile import GameTile, TileState
 import colors
 
 # from game_data import GameData
@@ -35,24 +34,18 @@ HOVER_OVERLAY = pygame.Surface(
 HOVER_OVERLAY.fill((0, 0, 0, 20))  # alpha 0..255; adjust for darkness
 
 
-class TileState(Enum):
-    HIDDEN = 0
-    FLAGGED = 1
-    REVEALED = 2
-
-
-
 class Game_Board:
-    def __init__(self, game_data=None):
+    def __init__(self, game_data: GameData = None):
 
         self.GRID_SIZE = 10  # board size in num tiles
         self.NUM_BOMBS = int(self.GRID_SIZE * self.GRID_SIZE * 0.1)
-        
+
         self.game_data = game_data
 
         self.board = self._generate_board()
+        self._place_bombs()
         self.tiles = self._generate_board_tiles()
-        #self._tile_group = pygame.sprite.Group(self.tiles)
+        # self._tile_group = pygame.sprite.Group(self.tiles)
         self.board_surface: pygame.Surface = pygame.Surface(
             (
                 DEFAULT_TILE_SIZE * self.GRID_SIZE,
@@ -77,39 +70,42 @@ class Game_Board:
     def _generate_board(self):
         _board = list(list(0 for _ in range(self.GRID_SIZE))
                       for _ in range(self.GRID_SIZE))
+        return _board
 
+    def _place_bombs(self):
         # Place bombs
         for _ in range(self.NUM_BOMBS):
             while True:
                 x = random.randint(0, self.GRID_SIZE - 1)
                 y = random.randint(0, self.GRID_SIZE - 1)
-                if _board[y][x] != 'm':
-                    _board[y][x] = 'm'
+                if self.board[y][x] != 'm':
+                    self.board[y][x] = 'm'
                     break
 
         # Calculate numbers
         for y in range(self.GRID_SIZE):
             for x in range(self.GRID_SIZE):
-                if _board[y][x] == 'm':
+                if self.board[y][x] == 'm':
                     continue
                 count = 0
                 for dy in range(-1, 2):
                     for dx in range(-1, 2):
                         if 0 <= y + dy < self.GRID_SIZE and 0 <= x + dx < self.GRID_SIZE:
-                            if _board[y + dy][x + dx] == 'm':
+                            if self.board[y + dy][x + dx] == 'm':
                                 count += 1
-                _board[y][x] = count
+                self.board[y][x] = count
+        
+        # update tiles content
 
-        return _board
 
     def _generate_board_tiles(self):
         tiles: list[GameTile] = []
 
         board_width = DEFAULT_TILE_SIZE * self.GRID_SIZE
         board_start_x = (
-                                self.game_data.display_buffer.get_width() - board_width) / 2
+            self.game_data.display_buffer.get_width() - board_width) / 2
         board_start_y = (
-                                self.game_data.display_buffer.get_height() - board_width) / 2
+            self.game_data.display_buffer.get_height() - board_width) / 2
 
         for y in range(len(self.board)):
             for x in range(len(self.board[y])):
@@ -134,9 +130,9 @@ class Game_Board:
         for tile in self.tiles:
             new_state = tile.update()
             tile.draw()
+
             if new_state == TileState.REVEALED:
                 self._update_shadows(tile)
-
                 if tile.content == 0:
                     self._reveal_neighbor_tiles(tile)
 
@@ -145,9 +141,8 @@ class Game_Board:
                 # reveal all mines
                 for tile in self.tiles:
                     if tile.content == "m":
-                        tile.reveal(overwrite_shadow=True)
+                        tile.reveal()
                         self._update_shadows(tile)
-                
 
             if tile.state == TileState.FLAGGED:
                 self.num_flags += 1
@@ -205,5 +200,6 @@ class Game_Board:
                 if not (xd == 0 and yd == 0) and (
                         0 <= x + xd < self.GRID_SIZE) and (
                         0 <= y + yd < self.GRID_SIZE):
-                    neighbors.append(self._get_tile_at_pixel(x=x + xd, y=y + yd))
+                    neighbors.append(
+                        self._get_tile_at_pixel(x=x + xd, y=y + yd))
         return neighbors

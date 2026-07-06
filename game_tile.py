@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pygame
 from pygame import font, sysfont
 from pygame.rect import Rect
@@ -8,6 +10,10 @@ from pathlib import Path
 
 import random
 import math
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from game_data import GameData
 
 import colors
 
@@ -34,7 +40,6 @@ class TileState(Enum):
     REVEALED = 2
 
 
-
 class GameTile(Sprite):
     """ A user interface element that can be added to a surface """
     center_position: tuple[int, int]
@@ -51,7 +56,7 @@ class GameTile(Sprite):
     """
     _shadow_mask = None
 
-    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], text, game_data=None,
+    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], text, game_data: GameData = None,
                  action=None):
         self.center_position = center_position
         self.tile_position = tile_position
@@ -227,12 +232,12 @@ class GameTile(Sprite):
 
                     color = colors.BLUE
                     if self.content == 2:
-                        color = colors.YEllOW
+                        color = colors.YELLOW
                     elif self.content >= 3:
                         # color = colors.RED
                         # map (3, 8, 255, 0)
                         color = (
-                            ((255) / (8 - 3)) * (8 - self.content ),
+                            ((255) / (8 - 3)) * (8 - self.content),
                             0,
                             0
                         )
@@ -280,7 +285,8 @@ class GameTile(Sprite):
 
     @property
     def image(self):
-        if self._image_cache_dirty or self._image_cache is None: #or self.game_data.display_rescaled:
+        # or self.game_data.display_rescaled:
+        if self._image_cache_dirty or self._image_cache is None:
             self._generate_image()
             self._image_cache_dirty = False
 
@@ -324,7 +330,7 @@ class GameTile(Sprite):
 
         if self.rect.collidepoint(self.game_data.mouse_pos) and self.game_data.game_state == GameState.NEWGAME:
             self._mouse_over = True
-            if self.game_data.mouse_button == 1:  # Left mouse button
+            if self.game_data.mouse_button == 1:  # Left mouse button                
                 return self.reveal()
 
             elif self.game_data.mouse_button == 3:  # Right mouse button
@@ -337,7 +343,7 @@ class GameTile(Sprite):
     def draw(self, target_surface: pygame.Surface = None):
         """ Draws element onto a surface """
         if target_surface is None:
-            target_surface=self.game_data.display_buffer
+            target_surface = self.game_data.display_buffer
         target_surface.blit(self.image, self.rect)
 
         if self._mouse_over:

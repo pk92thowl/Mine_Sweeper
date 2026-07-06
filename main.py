@@ -81,7 +81,7 @@ def play_level():
     )
 
     ui_timer = UI_STAT_BOX(
-        rect=Rect(500, 50, 150, 50),
+        rect=Rect(500, 50, 200, 50),
         font_name="Courier",
         font_size=20,
         image_path="assets/stop_watch.png",
