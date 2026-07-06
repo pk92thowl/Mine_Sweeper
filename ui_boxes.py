@@ -252,10 +252,6 @@ class UI_POPUP_BOX(Sprite):
         if self._visible:
             self.restart_button.update()
             if self.restart_button.pressed:
-<<<<<<< HEAD
-=======
-                print("Restart game")
->>>>>>> main
                 self.game_data.start_new_game()
 
     # Optional convenience draw when not using sprite groups:
@@ -286,7 +282,6 @@ class UI_POPUP_BOX(Sprite):
             #     "",
             #     self.restart_button.rect
             # )
-<<<<<<< HEAD
 
 
 class UI_DIFFICULTY_SELECTOR(Sprite):
@@ -538,5 +533,3 @@ class UI_SCOREBOARD(Sprite):
         self._update_cached_surface_if_needed()
         self.game_data.display_buffer.blit(
             self._cached_surface, self.rect.topleft)
-=======
->>>>>>> main
