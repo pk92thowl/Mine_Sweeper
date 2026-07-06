@@ -229,7 +229,7 @@ class GameTile(Sprite):
 
                     text_img, _ = font.render(
                         text=str(self.content),
-                        fgcolor=COLOR_TEXT,
+                        fgcolor=COLOR_TEXT, # TODO color based on number
                         bgcolor=None
                     )
 
