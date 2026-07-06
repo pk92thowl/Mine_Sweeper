@@ -138,8 +138,9 @@ class UI_STAT_BOX(Sprite):
 
     # Optional convenience draw when not using sprite groups:
     def draw_to(self):
-        self._update_cached_surface_if_needed()
-        self.game_data.display_buffer.blit(self._cached_surface, self.rect.topleft)
+        # self._update_cached_surface_if_needed()
+        self.game_data.display_buffer.blit(
+            self._cached_surface, self.rect.topleft)
 
 
 class UI_POPUP_BOX(Sprite):
@@ -154,12 +155,13 @@ class UI_POPUP_BOX(Sprite):
         self.h = h
 
         self.color_bg = colors.TRANSPARENT
+        # self.color_bg = colors.BLUE
         self.border_color = border_color
         self.outer_border_width = 2
         self.padding = padding
 
         # font + text state
-        self.font = pygame.freetype.SysFont(font_name, font_size, bold=False)
+        self.font = pygame.freetype.SysFont(font_name, font_size, bold=True)
         self.text_color = color_text
         self._text = ""
         self._cached_surface = None
@@ -171,12 +173,13 @@ class UI_POPUP_BOX(Sprite):
             game_data=game_data,
             center_position=(
                 self.game_data.display_buffer.get_rect().centerx,
-                self.game_data.display_buffer.get_rect().centery+h/2 -40
+                self.game_data.display_buffer.get_rect().centery+h/2 - 40
             ),
             text="Restart",
             font_size=font_size,
-            text_rgb=colors.BLACK,
-            bg_rgb=colors.GREY,
+            text_rgb=colors.WHITE,
+            bg_rgb=colors.TRANSPARENT
+            # bg_rgb=colors.GREY
         )
 
     def set_text(self, text):
@@ -218,7 +221,8 @@ class UI_POPUP_BOX(Sprite):
         if text_surf:
             tx = surf.get_rect().centerx - text_surf.get_width() / 2
             # tx = inner.left + 8
-            ty = surf.get_rect().centery - text_surf.get_height() / 2
+            # ty = surf.get_rect().centery - text_surf.get_height() / 2
+            ty = self.padding
             # ty = inner.top + (inner.height - text_surf.get_height()) // 2
             surf.blit(text_surf, (tx, ty))
 
@@ -245,7 +249,10 @@ class UI_POPUP_BOX(Sprite):
         # self._update_cached_surface_if_needed()
 
         if self._visible:
-            self.restart_button.update2()
+            self.restart_button.update()
+            if self.restart_button.pressed:
+                print("Restart game")
+                self.game_data.start_new_game()
 
     # Optional convenience draw when not using sprite groups:
     def draw_to(self):
@@ -261,18 +268,17 @@ class UI_POPUP_BOX(Sprite):
 
             self.restart_button.draw()
 
-
-            print(
-                self.rect,
-                self._visible,
-                " ",
-                self.game_data.display_buffer.get_rect().centerx,
-                self.rect.width / 2,
-                self.game_data.display_buffer.get_rect().centerx - self.rect.width / 2,
-                " ",
-                self.game_data.display_buffer.get_rect().centery,
-                self.rect.height / 2,
-                self.game_data.display_buffer.get_rect().centery - self.rect.height / 2,
-                "",
-                self.restart_button.rect
-            )
+            # print(
+            #     self.rect,
+            #     self._visible,
+            #     " ",
+            #     self.game_data.display_buffer.get_rect().centerx,
+            #     self.rect.width / 2,
+            #     self.game_data.display_buffer.get_rect().centerx - self.rect.width / 2,
+            #     " ",
+            #     self.game_data.display_buffer.get_rect().centery,
+            #     self.rect.height / 2,
+            #     self.game_data.display_buffer.get_rect().centery - self.rect.height / 2,
+            #     "",
+            #     self.restart_button.rect
+            # )

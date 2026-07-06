@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pygame
 from pygame import font, sysfont
 from pygame.rect import Rect
@@ -9,8 +11,11 @@ from pathlib import Path
 import random
 import math
 
-#from game_data import GameData
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from game_data import GameData
 
+from game_states import GameState
 
 GRID_SIZE = 10  # board size in num tiles
 NUM_BOMBS = int(GRID_SIZE*GRID_SIZE*0.1)
@@ -49,7 +54,7 @@ class GameTile(Sprite):
     """
     _shadow_mask = None
 
-    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], text, game_data = None, action=None):
+    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], text, game_data: GameData = None, action=None):
         self.center_position = center_position
         self.tile_position = tile_position
         self.game_data = game_data
@@ -278,7 +283,11 @@ class GameTile(Sprite):
         #  self.image.get_rect(center=self.center_position)
         return self.image.get_rect(center=self.center_position)
 
-    def reveal(self):
+    def reveal(self, overwrite_shadow = False):
+        # if overwrite_shadow:
+        #     self.add_shadow_direction = []
+        #     self._image_cache_dirty = True
+            
         self.game_data.timer_start()
         if self.state == TileState.HIDDEN:
             self.state = TileState.REVEALED
@@ -305,7 +314,8 @@ class GameTile(Sprite):
         """ Updates the mouse_over variable and returns the button's
             action value when clicked.
         """
-        if self.rect.collidepoint(self.game_data.mouse_pos):
+
+        if self.rect.collidepoint(self.game_data.mouse_pos) and self.game_data.game_state == GameState.NEWGAME:
             self._mouse_over = True
             if self.game_data.mouse_button == 1:  # Left mouse button
                 return self.reveal()
@@ -325,7 +335,7 @@ class GameTile(Sprite):
 
 
 class Game_Board:
-    def __init__(self, game_data = None):
+    def __init__(self, game_data: GameData = None):
         self.game_data = game_data
 
         self.board = self._generate_board()
@@ -421,9 +431,19 @@ class Game_Board:
 
             if tile.game_over:
                 self.game_over = True
+                # reveal all mines
+                for tile in self.tiles:
+                    if tile.content == "m":
+                        tile.reveal(overwrite_shadow=True)
+                        self._update_shadows(tile)
+                
 
             if tile.state == TileState.FLAGGED:
                 self.num_flags += 1
+
+        if self.game_data.game_state == GameState.NEWGAME:
+            if self.game_over or self.game_won:
+                self.game_data.game_state = GameState.GAMEOVER
 
         # Scale tile texture to window size
         # image = pygame.transform.scale(

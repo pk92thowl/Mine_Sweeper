@@ -1,9 +1,12 @@
+
+from __future__ import annotations
+
 import pygame
-from enum import Enum
 
 # from pygame.locals import QUIT
 import time
 
+from game_states import GameState
 from game_field import Game_Board
 
 DEFAULT_DISPLAY_WIDTH = 1500
@@ -12,13 +15,6 @@ DEFAULT_DISPLAY_HEIGHT = 1000
 BLUE = (106, 159, 181)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-
-
-class GameState(Enum):
-    QUIT = -1
-    TITLE = 0
-    NEWGAME = 1
-    GAMEOVER = 2
 
 
 class GameData:
@@ -87,6 +83,9 @@ class GameData:
 
         self.display.fill(BLACK)
         self.display_buffer.fill(BLUE)
+        
+        # print(game_data.game_board.game_won, game_data.game_board.game_over)
+        
 
         for event in pygame.event.get():
             # print(event)
@@ -125,5 +124,5 @@ class GameData:
                 print(self.display.get_size(), self.display_scaling_factor)
 
             if event.type == pygame.QUIT:
-                # pygame.quit()
+                # pygame.quit() # TODO don't use this, fix that game state is only set once by game board
                 self.game_state = GameState.QUIT
