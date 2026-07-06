@@ -10,7 +10,7 @@ import colors
 from buttons import Button, ButtonActions
 from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR, UI_SCOREBOARD
 from game_data import GameData, GameState
-from game_field import Game_Board
+from game_field import DEFAULT_BOARD_SIZE
 
 BLUE = (106, 159, 181)
 WHITE = (255, 255, 255)
@@ -53,26 +53,19 @@ def play_level():
         # return_btn
     ]
 
-    ui_count_flags = UI_STAT_BOX(
-        rect=Rect(
-            game_data.display_buffer.get_width() / 2 - (160 / 2),
-            45,
-            160,
-            50
-        ),
-        font_name="Courier",
-        font_size=20,
-        image_path="assets/flag.png",
-        outer_color=(180, 180, 180),
-        outer_border=(120, 120, 120),
-        left_bg=(160, 160, 160),
-        right_bg=(255, 255, 255),
-        padding=10,
-        game_data=game_data
-    )
+    # --- Statusleiste zentriert über dem Spielfeld ---
+    BOX_H = 50
+    GAP_TO_BOARD = 10  # kleine Lücke zwischen UI und Spielbrett
+
+    W_BOMBS, W_FLAGS, W_TIMER, W_DIFF = 150, 160, 200, 160
+    total_w = W_BOMBS + W_FLAGS + W_TIMER + W_DIFF
+
+    board_top = (game_data.display_buffer.get_height() - DEFAULT_BOARD_SIZE) / 2
+    bar_y = board_top - BOX_H - GAP_TO_BOARD
+    bar_x = (game_data.display_buffer.get_width() - total_w) / 2
 
     ui_count_bombs = UI_STAT_BOX(
-        rect=Rect(200, 45, 150, 50),
+        rect=Rect(bar_x, bar_y, W_BOMBS, BOX_H),
         font_name="Courier",
         font_size=20,
         image_path="assets/mine_2.png",
@@ -81,12 +74,25 @@ def play_level():
         left_bg=(160, 160, 160),
         right_bg=(255, 255, 255),
         padding=10,
+        game_data=game_data
+    )
+
+    ui_count_flags = UI_STAT_BOX(
+        rect=Rect(0, bar_y, W_FLAGS, BOX_H),
+        font_name="Courier",
+        font_size=20,
+        image_path="assets/flag.png",
+        outer_color=(180, 180, 180),
+        outer_border=(120, 120, 120),
+        left_bg=(160, 160, 160),
+        right_bg=(255, 255, 255),
+        padding=10,
         game_data=game_data,
-        align_relative_to=(ui_count_flags, 3)
+        align_relative_to=(ui_count_bombs, 1)  # rechts neben Bomben
     )
 
     ui_timer = UI_STAT_BOX(
-        rect=Rect(500, 45, 200, 50),
+        rect=Rect(0, bar_y, W_TIMER, BOX_H),
         font_name="Courier",
         font_size=20,
         image_path="assets/stop_watch.png",
@@ -99,13 +105,12 @@ def play_level():
         align_relative_to=(ui_count_flags, 1)
     )
 
-    # create difficulty selector
     ui_difficulty = UI_DIFFICULTY_SELECTOR(
-        rect=Rect(0, 45, 160, 50),
+        rect=Rect(0, bar_y, W_DIFF, BOX_H),
         font_name="Courier",
         font_size=20,
         game_data=game_data,
-        align_relative_to=(ui_timer, 1)  # rechts neben dem Timer
+        align_relative_to=(ui_timer, 1)
     )
 
     # Scoreboard links neben dem Spielfeld
