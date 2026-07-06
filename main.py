@@ -127,8 +127,8 @@ def play_level():
         game_data.game_board.update()
 
         for ui_box in ui_boxes:
-            ui_box.draw_to()
             ui_box.update()
+            ui_box.draw_to()
 
         # draw game field
         # each game tile is like a button

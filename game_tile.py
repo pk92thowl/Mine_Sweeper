@@ -70,7 +70,7 @@ class GameTile(Sprite):
         self._update_shadow_mask()
 
         # Options: " " for safe tile, "f" for flagged tile, "m" for mine tile, digit for number of adjacent mines
-        self.content = text
+        self._content = text
         self._base_image = None
         """Tile base texture (randomized on create)"""
         self._image_cache = None
@@ -208,7 +208,7 @@ class GameTile(Sprite):
             image.blit(self._shadow_mask, (0, 0),
                        special_flags=pygame.BLEND_PREMULTIPLIED)
 
-            if self.content == 'm':
+            if self._content == 'm':
                 mine_img = pygame.image.load(
                     Path("assets/mine_2.png")).convert_alpha()
                 mine_img = pygame.transform.scale(
@@ -223,7 +223,7 @@ class GameTile(Sprite):
                 )
 
             else:
-                if isinstance(self.content, int) and self.content > 0:
+                if isinstance(self._content, int) and self._content > 0:
                     font = pygame.freetype.SysFont(
                         "Courier",
                         FONT_SIZE,
@@ -231,19 +231,19 @@ class GameTile(Sprite):
                     )
 
                     color = colors.BLUE
-                    if self.content == 2:
+                    if self._content == 2:
                         color = colors.YELLOW
-                    elif self.content >= 3:
+                    elif self._content >= 3:
                         # color = colors.RED
                         # map (3, 8, 255, 0)
                         color = (
-                            ((255) / (8 - 3)) * (8 - self.content),
+                            ((255) / (8 - 3)) * (8 - self._content),
                             0,
                             0
                         )
 
                     text_img, _ = font.render(
-                        text=str(self.content),
+                        text=str(self._content),
                         fgcolor=color,  # TODO color based on number
                         bgcolor=None
                     )
@@ -284,6 +284,16 @@ class GameTile(Sprite):
         return self._base_image
 
     @property
+    def content(self):
+        return self._content
+
+    @content.setter
+    def content(self, content):
+        self._content = content
+        self._image_cache_dirty = True
+
+
+    @property
     def image(self):
         # or self.game_data.display_rescaled:
         if self._image_cache_dirty or self._image_cache is None:
@@ -300,13 +310,13 @@ class GameTile(Sprite):
         return self.image.get_rect(center=self.center_position)
 
     def reveal(self):
-        self.game_data.timer_start()
+        
         if self.state == TileState.HIDDEN:
             self.state = TileState.REVEALED
 
             self._image_cache_dirty = True
 
-            if self.content == 'm':
+            if self._content == 'm':
                 # Game over
                 self.game_over = True
 

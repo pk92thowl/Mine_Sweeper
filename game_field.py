@@ -42,9 +42,9 @@ class Game_Board:
 
         self.game_data = game_data
 
-        self.board = self._generate_board()
-        self._place_bombs()
+        # self.board = self._generate_board()
         self.tiles = self._generate_board_tiles()
+        # self._place_bombs()
         # self._tile_group = pygame.sprite.Group(self.tiles)
         self.board_surface: pygame.Surface = pygame.Surface(
             (
@@ -58,10 +58,9 @@ class Game_Board:
         self.game_won = False
 
     def _check_win_condition(self):
-        for y in range(self.GRID_SIZE):
-            for x in range(self.GRID_SIZE):
-                if self.board[y][x] != 'm' and self.tiles[y * self.GRID_SIZE + x].state != TileState.REVEALED:
-                    return False
+        for tile in self.tiles:
+            if tile.content != "m" and tile.state != TileState.REVEALED:
+                return False
         return True
 
     def _get_tile_at_pixel(self, x, y) -> GameTile:
@@ -72,31 +71,34 @@ class Game_Board:
                       for _ in range(self.GRID_SIZE))
         return _board
 
-    def _place_bombs(self):
+    def _place_bombs(self, first_tile: GameTile = None):
         # Place bombs
         for _ in range(self.NUM_BOMBS):
             while True:
                 x = random.randint(0, self.GRID_SIZE - 1)
                 y = random.randint(0, self.GRID_SIZE - 1)
-                if self.board[y][x] != 'm':
-                    self.board[y][x] = 'm'
+
+                target_tile = self._get_tile_at_pixel(x=x, y=y)
+                if target_tile.content != 'm' and target_tile != first_tile:
+                    target_tile.content = 'm'
                     break
 
         # Calculate numbers
         for y in range(self.GRID_SIZE):
             for x in range(self.GRID_SIZE):
-                if self.board[y][x] == 'm':
+                if self._get_tile_at_pixel(x=x, y=y).content == 'm':
                     continue
+
                 count = 0
                 for dy in range(-1, 2):
                     for dx in range(-1, 2):
                         if 0 <= y + dy < self.GRID_SIZE and 0 <= x + dx < self.GRID_SIZE:
-                            if self.board[y + dy][x + dx] == 'm':
+                            if self._get_tile_at_pixel(x=x+dx, y=y+dy).content == 'm':
                                 count += 1
-                self.board[y][x] = count
-        
-        # update tiles content
 
+                self._get_tile_at_pixel(x=x, y=y).content = count
+
+        # update tiles content
 
     def _generate_board_tiles(self):
         tiles: list[GameTile] = []
@@ -107,8 +109,8 @@ class Game_Board:
         board_start_y = (
             self.game_data.display_buffer.get_height() - board_width) / 2
 
-        for y in range(len(self.board)):
-            for x in range(len(self.board[y])):
+        for y in range(self.GRID_SIZE):
+            for x in range(self.GRID_SIZE):
                 # create ui tile
                 tiles.append(
                     GameTile(
@@ -117,7 +119,7 @@ class Game_Board:
                             y * DEFAULT_TILE_SIZE + DEFAULT_TILE_SIZE / 2 + board_start_y
                         ),
                         tile_position=(x, y),
-                        text=self.board[y][x],
+                        text=0,
                         game_data=self.game_data
                     )
                 )
@@ -132,6 +134,10 @@ class Game_Board:
             tile.draw()
 
             if new_state == TileState.REVEALED:
+                if not self.game_data._timer_run:
+                    self.game_data.timer_start()
+                    self._place_bombs(first_tile=tile)
+
                 self._update_shadows(tile)
                 if tile.content == 0:
                     self._reveal_neighbor_tiles(tile)
