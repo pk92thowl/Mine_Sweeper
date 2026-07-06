@@ -8,7 +8,7 @@ from enum import Enum
 
 import colors
 from buttons import Button, ButtonActions
-from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR
+from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR, UI_SCOREBOARD
 from game_data import GameData, GameState
 from game_field import Game_Board
 
@@ -108,6 +108,15 @@ def play_level():
         align_relative_to=(ui_timer, 1)  # rechts neben dem Timer
     )
 
+    # Scoreboard links neben dem Spielfeld
+    # (Board ist 800px breit und zentriert -> linker Rand hat ~350px Platz)
+    ui_scoreboard = UI_SCOREBOARD(
+        rect=Rect(30, 150, 290, 260),
+        font_name="Courier",
+        font_size=18,
+        game_data=game_data
+    )
+
     win_lose_ui_popup = UI_POPUP_BOX(
         w=400,
         h=150,
@@ -120,6 +129,7 @@ def play_level():
         ui_count_flags,
         ui_timer,
         ui_difficulty,
+        ui_scoreboard,
         win_lose_ui_popup,
     ]
 

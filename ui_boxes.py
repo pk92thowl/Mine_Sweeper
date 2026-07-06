@@ -397,3 +397,139 @@ class UI_DIFFICULTY_SELECTOR(Sprite):
         if self._mouse_over:
             self.game_data.display_buffer.blit(
                 self.HOVER_OVERLAY, self.rect.topleft)
+
+
+class UI_SCOREBOARD(Sprite):
+    """Zeigt die Top-5-Zeiten der aktuell gewählten Schwierigkeitsstufe.
+
+    Ist der aktuelle Spieler nicht in den Top 5, wird er darunter als
+    Extra-Eintrag mit seinem echten Rang angezeigt.
+    Spalten: Rang | Name | Zeit
+    """
+
+    def __init__(self, rect, font_name="Courier", font_size=18,
+                 outer_color=(180, 180, 180), outer_border=(120, 120, 120),
+                 inner_bg=(255, 255, 255), padding=8,
+                 game_data: GameData = None,
+                 align_relative_to: tuple[Sprite, int] = None):
+        super().__init__()
+        self.rect = pygame.Rect(rect)
+
+        if align_relative_to is not None:
+            if align_relative_to[1] == 1:    # rechts daneben
+                self.rect.left = align_relative_to[0].rect.right
+            elif align_relative_to[1] == 2:  # darunter
+                self.rect.top = align_relative_to[0].rect.bottom
+            elif align_relative_to[1] == 3:  # links daneben
+                self.rect.right = align_relative_to[0].rect.left
+            elif align_relative_to[1] == 4:  # darüber
+                self.rect.bottom = align_relative_to[0].rect.top
+
+        self.game_data = game_data
+        self.outer_color = outer_color
+        self.outer_border = outer_border
+        self.outer_border_width = 2
+        self.inner_bg = inner_bg
+        self.padding = padding
+
+        self.font_title = pygame.freetype.SysFont(font_name, font_size, bold=True)
+        self.font_row = pygame.freetype.SysFont(font_name, font_size - 2, bold=False)
+        self.font_row_highlight = pygame.freetype.SysFont(
+            font_name, font_size - 2, bold=True)
+
+        self.row_height = font_size + 6
+        self.color_text = (0, 0, 0)
+        self.color_header = (90, 90, 90)
+        self.color_player = (0, 0, 200)
+
+        self._snapshot = None       # zuletzt gerenderte Daten
+        self._cached_surface = None
+        self._dirty = True
+
+    @staticmethod
+    def _format_row(rank, name, duration, max_name_len=10):
+        name = name[:max_name_len]
+        return f"{rank:>2}. {name:<{max_name_len}} {duration:>7.2f}s"
+
+    def _update_cached_surface_if_needed(self):
+        if not self._dirty and self._cached_surface is not None:
+            return
+
+        top5, player_entry = self._snapshot[1], self._snapshot[2]
+
+        w, h = self.rect.size
+        surf = pygame.Surface((w, h), pygame.SRCALPHA)
+
+        pygame.draw.rect(surf, self.outer_color, (0, 0, w, h))
+        inner = pygame.Rect(self.padding, self.padding,
+                            w - self.padding * 2, h - self.padding * 2)
+        pygame.draw.rect(surf, self.inner_bg, inner)
+
+        x = inner.left + 8
+        y = inner.top + 6
+
+        # Titel
+        title = f"Top 5 - {self.game_data.difficulty.name.capitalize()}"
+        title_surf, _ = self.font_title.render(
+            title, fgcolor=self.color_text, bgcolor=None)
+        surf.blit(title_surf, (x, y))
+        y += title_surf.get_height() + 8
+
+        # Kopfzeile
+        header = f"{'#':>2}  {'Name':<10} {'Zeit':>8}"
+        header_surf, _ = self.font_row.render(
+            header, fgcolor=self.color_header, bgcolor=None)
+        surf.blit(header_surf, (x, y))
+        y += self.row_height
+
+        pygame.draw.line(surf, self.color_header,
+                         (x, y - 2), (inner.right - 8, y - 2), 1)
+        y += 2
+
+        if not top5:
+            empty_surf, _ = self.font_row.render(
+                "Noch keine Zeiten", fgcolor=self.color_header, bgcolor=None)
+            surf.blit(empty_surf, (x, y))
+        else:
+            for rank, name, duration in top5:
+                is_player = (name == self.game_data.player_name)
+                font = self.font_row_highlight if is_player else self.font_row
+                color = self.color_player if is_player else self.color_text
+
+                row_surf, _ = font.render(
+                    self._format_row(rank, name, duration),
+                    fgcolor=color, bgcolor=None)
+                surf.blit(row_surf, (x, y))
+                y += self.row_height
+
+            # Extra-Eintrag: Spieler außerhalb der Top 5
+            if player_entry is not None:
+                sep_surf, _ = self.font_row.render(
+                    "...", fgcolor=self.color_header, bgcolor=None)
+                surf.blit(sep_surf, (x, y))
+                y += self.row_height
+
+                rank, name, duration = player_entry
+                row_surf, _ = self.font_row_highlight.render(
+                    self._format_row(rank, name, duration),
+                    fgcolor=self.color_player, bgcolor=None)
+                surf.blit(row_surf, (x, y))
+
+        pygame.draw.rect(surf, self.outer_border,
+                         (0, 0, w, h), self.outer_border_width)
+
+        self._cached_surface = surf
+        self._dirty = False
+
+    def update(self, *args, **kwargs):
+        top5, player_entry = self.game_data.get_scoreboard()
+        snapshot = (self.game_data.difficulty, tuple(top5), player_entry)
+
+        if snapshot != self._snapshot:
+            self._snapshot = snapshot
+            self._dirty = True
+
+    def draw_to(self):
+        self._update_cached_surface_if_needed()
+        self.game_data.display_buffer.blit(
+            self._cached_surface, self.rect.topleft)

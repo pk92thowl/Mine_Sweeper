@@ -22,7 +22,7 @@ PATH_SCORE_FILE = Path("scores.json")
 
 # Brettgröße und Bombenanzahl pro Schwierigkeitsstufe
 DIFFICULTY_SETTINGS = {
-    DifficultyLevel.EASY: {"grid_size": 8, "num_bombs": 7},
+    DifficultyLevel.EASY: {"grid_size": 8, "num_bombs": 8},
     DifficultyLevel.MEDIUM: {"grid_size": 12, "num_bombs": 18},
     DifficultyLevel.HARD: {"grid_size": 16, "num_bombs": 30},
 }
@@ -59,6 +59,8 @@ class GameData:
 
         self.player_name = "test"
         self.difficulty = DifficultyLevel.EASY
+
+        self.load_score()
 
         self.create_new_board()
 
@@ -107,11 +109,12 @@ class GameData:
                 self._score_data[dl.name] = {}
                 # self.difficulty.name: self.game_duration
 
-        if self.player_name in self._score_data[self.difficulty.name]:
-            if self.game_duration < self._score_data[self.difficulty.name][self.player_name]:
-                self._score_data[self.difficulty.name][self.player_name] = self.game_duration
-        else:
-            self._score_data[self.difficulty.name][self.player_name] = self.game_duration
+        # nur speichern, wenn es die erste oder eine bessere Zeit ist
+        old_time = self._score_data[self.difficulty.name].get(self.player_name)
+        if old_time is not None and self.game_duration >= old_time:
+            return
+
+        self._score_data[self.difficulty.name][self.player_name] = self.game_duration
 
         with open(PATH_SCORE_FILE, "w") as f:
             json.dump(
@@ -119,6 +122,36 @@ class GameData:
                 f,
                 indent=4
             )
+
+    def get_scoreboard(self) -> tuple[list, tuple | None]:
+        """Rangliste für die aktuell gewählte Schwierigkeitsstufe.
+
+        Returns
+        -------
+        top5 : list[tuple[int, str, float]]
+            Liste von (Rang, Name, Zeit), aufsteigend nach Zeit sortiert.
+        player_entry : tuple[int, str, float] | None
+            Extra-Eintrag für den aktuellen Spieler, falls er eine Zeit
+            hat, aber nicht in den Top 5 ist. Sonst None.
+        """
+        scores: dict[str, float] = {}
+        if self._score_data is not None:
+            scores = self._score_data.get(self.difficulty.name, {})
+
+        ranked = sorted(scores.items(), key=lambda kv: kv[1])
+
+        top5 = [
+            (i + 1, name, duration)
+            for i, (name, duration) in enumerate(ranked[:5])
+        ]
+
+        player_entry = None
+        for i, (name, duration) in enumerate(ranked):
+            if name == self.player_name and i >= 5:
+                player_entry = (i + 1, name, duration)
+                break
+
+        return top5, player_entry
 
     def load_score(self):
         if PATH_SCORE_FILE.exists():
