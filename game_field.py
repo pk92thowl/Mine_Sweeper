@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pygame
 from pygame import font, sysfont
 from pygame.rect import Rect
@@ -10,6 +12,11 @@ from game_tile import GameTile
 import random
 import math
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from game_data import GameData
+
+from game_states import GameState
 import colors
 
 # from game_data import GameData
@@ -135,9 +142,19 @@ class Game_Board:
 
             if tile.game_over:
                 self.game_over = True
+                # reveal all mines
+                for tile in self.tiles:
+                    if tile.content == "m":
+                        tile.reveal(overwrite_shadow=True)
+                        self._update_shadows(tile)
+                
 
             if tile.state == TileState.FLAGGED:
                 self.num_flags += 1
+
+        if self.game_data.game_state == GameState.NEWGAME:
+            if self.game_over or self.game_won:
+                self.game_data.game_state = GameState.GAMEOVER
 
         # Scale tile texture to window size
         # image = pygame.transform.scale(
