@@ -54,7 +54,8 @@ def play_level():
     ]
 
     ui_count_flags = UI_STAT_BOX(
-        rect=Rect(game_data.display_buffer.get_width() / 2 - (160 / 2), 50, 160, 50),
+        rect=Rect(game_data.display_buffer.get_width() /
+                  2 - (160 / 2), 50, 160, 50),
         font_name="Courier",
         font_size=20,
         image_path="assets/flag.png",
@@ -95,23 +96,29 @@ def play_level():
     )
 
     win_lose_ui_popup = UI_POPUP_BOX(
-        w = 400,
-        h = 150,
+        w=400,
+        h=150,
         font_size=64,
         game_data=game_data
     )
 
-    ui_boxes:list[Sprite] = [ui_count_bombs, ui_count_flags, ui_timer, win_lose_ui_popup]
+    ui_boxes: list[Sprite] = [
+        ui_count_bombs,
+        ui_count_flags,
+        ui_timer,
+        win_lose_ui_popup
+    ]
 
     # win_lose_ui_popup.show()
     # win_lose_ui_popup.set_text("test")
     # game_data.game_state = GameState.GAMEOVER
-    
+
     # game_data.game_board.game_over = True
 
+    clock = pygame.time.Clock()
     while game_data.game_state != GameState.QUIT:
         game_data.update()
-        
+
         # Handle Buttons
         for button in buttons:
             ui_action = button.update2()
@@ -133,22 +140,17 @@ def play_level():
         # draw game field
         # each game tile is like a button
 
-
-        
         if game_data.game_board.game_over or game_data.game_board.game_won:
             game_data.timer_stop()
-            win_lose_ui_popup.set_text(f"{'You Win' if game_data.game_board.game_won else 'You Lose'}")
+            win_lose_ui_popup.set_text(
+                f"{'You Win' if game_data.game_board.game_won else 'You Lose'}"
+            )
             win_lose_ui_popup.set_text_color(
                 colors.GREEN if game_data.game_board.game_won else colors.RED
             )
             win_lose_ui_popup.show()
         else:
             win_lose_ui_popup.hide()
-            
-
-        #     game_data.game_state = GameState.GAMEOVER
-        # if game_board.game_won:
-        #     game_data.game_state = GameState.GAMEOVER
 
         # print(
         #     game_data.display_buffer,
@@ -174,6 +176,9 @@ def play_level():
                                game_data.display_buffer.get_rect())
 
         pygame.display.flip()
+
+        clock.tick()
+        print(clock.get_fps())
 
 
 if __name__ == "__main__":

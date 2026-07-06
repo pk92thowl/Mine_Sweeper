@@ -134,13 +134,13 @@ class Game_Board:
                 if tile.content == 0:
                     self._reveal_neighbor_tiles(tile)
 
-            if tile.game_over:
-                self.game_over = True
-                # reveal all mines
-                for tile in self.tiles:
-                    if tile.content == "m":
-                        tile.reveal()
-                        self._update_shadows(tile)
+                if tile.game_over:
+                    self.game_over = True
+                    # reveal all mines
+                    for tile in self.tiles:
+                        if tile.content == "m":
+                            tile.reveal()
+                            self._update_shadows(tile)
 
             if tile.state == TileState.FLAGGED:
                 self.num_flags += 1
