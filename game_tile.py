@@ -21,17 +21,12 @@ from game_states import GameState
 # from game_data import GameData, GameState
 
 
-DEFAULT_TILE_SIZE = int(800 / 10)  # tile size in px
+# self.tile_size = int(800 / 10)  # tile size in px
 
 FONT_SIZE = 36
 COLOR_BG = (106, 159, 181)
 COLOR_TEXT = (0, 0, 255)
 COLOR_TEXT_HIGHLIGHT = (255, 0, 0)
-
-# TODO change so its scaled
-HOVER_OVERLAY = pygame.Surface(
-    (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE), pygame.SRCALPHA)
-HOVER_OVERLAY.fill((0, 0, 0, 20))  # alpha 0..255; adjust for darkness
 
 
 class TileState(Enum):
@@ -56,10 +51,11 @@ class GameTile(Sprite):
     """
     _shadow_mask = None
 
-    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], text, game_data: GameData = None,
-                 action=None):
+    def __init__(self, center_position: tuple[int, int], tile_position: tuple[int, int], tile_size, text, game_data: GameData = None):
         self.center_position = center_position
         self.tile_position = tile_position
+        self.tile_size = tile_size
+
         self.game_data = game_data
 
         self._mouse_over = False
@@ -76,7 +72,10 @@ class GameTile(Sprite):
         self._image_cache = None
         self._image_cache_dirty = True
 
-        self.action = action
+        self.HOVER_OVERLAY = pygame.Surface(
+            (self.tile_size, self.tile_size), pygame.SRCALPHA)
+        # alpha 0..255; adjust for darkness
+        self.HOVER_OVERLAY.fill((0, 0, 0, 20))
 
         super().__init__()
 
@@ -111,7 +110,7 @@ class GameTile(Sprite):
             _description_
         """
 
-        size = (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE)
+        size = (self.tile_size, self.tile_size)
         dark_alpha = 140
         highlight_alpha = 10
 
@@ -198,7 +197,7 @@ class GameTile(Sprite):
             ).convert_alpha()
             flag_img = pygame.transform.scale(
                 flag_img,
-                (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE)
+                (self.tile_size, self.tile_size)
             )
             image.blit(flag_img, (0, 0))
 
@@ -213,13 +212,13 @@ class GameTile(Sprite):
                     Path("assets/mine_2.png")).convert_alpha()
                 mine_img = pygame.transform.scale(
                     mine_img,
-                    (DEFAULT_TILE_SIZE * 0.75, DEFAULT_TILE_SIZE * 0.75)
+                    (self.tile_size * 0.75, self.tile_size * 0.75)
                 )
 
                 image.blit(
                     mine_img,
                     mine_img.get_rect(
-                        center=(DEFAULT_TILE_SIZE / 2, DEFAULT_TILE_SIZE / 2))
+                        center=(self.tile_size / 2, self.tile_size / 2))
                 )
 
             else:
@@ -250,11 +249,11 @@ class GameTile(Sprite):
 
                     text_img = pygame.transform.scale(
                         text_img,
-                        (DEFAULT_TILE_SIZE * 0.5, DEFAULT_TILE_SIZE * 0.5)
+                        (self.tile_size * 0.5, self.tile_size * 0.5)
                     )
 
                     text_rect = text_img.get_rect(
-                        center=(DEFAULT_TILE_SIZE / 2, DEFAULT_TILE_SIZE / 2))
+                        center=(self.tile_size / 2, self.tile_size / 2))
 
                     image.blit(text_img, text_rect)
 
@@ -274,7 +273,7 @@ class GameTile(Sprite):
             self._base_image = pygame.image.load(image_path).convert_alpha()
             self._base_image = pygame.transform.scale(
                 self._base_image,
-                (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE)
+                (self.tile_size, self.tile_size)
             )
 
             if random.randint(0, 1) == 0:
@@ -291,7 +290,6 @@ class GameTile(Sprite):
     def content(self, content):
         self._content = content
         self._image_cache_dirty = True
-
 
     @property
     def image(self):
@@ -310,7 +308,7 @@ class GameTile(Sprite):
         return self.image.get_rect(center=self.center_position)
 
     def reveal(self):
-        
+
         if self.state == TileState.HIDDEN:
             self.state = TileState.REVEALED
 
@@ -340,7 +338,7 @@ class GameTile(Sprite):
 
         if self.rect.collidepoint(self.game_data.mouse_pos) and self.game_data.game_state == GameState.NEWGAME:
             self._mouse_over = True
-            if self.game_data.mouse_button == 1:  # Left mouse button                
+            if self.game_data.mouse_button == 1:  # Left mouse button
                 return self.reveal()
 
             elif self.game_data.mouse_button == 3:  # Right mouse button
@@ -357,4 +355,4 @@ class GameTile(Sprite):
         target_surface.blit(self.image, self.rect)
 
         if self._mouse_over:
-            target_surface.blit(HOVER_OVERLAY, self.rect)
+            target_surface.blit(self.HOVER_OVERLAY, self.rect)

@@ -20,36 +20,33 @@ import colors
 
 # from game_data import GameData
 
-
-DEFAULT_TILE_SIZE = int(800 / 10)  # tile size in px
+DEFAULT_BOARD_SIZE = 800  # board size in px
+# DEFAULT_TILE_SIZE = int(BOARD_SIZE / 10)  # tile size in px
 
 FONT_SIZE = 36
 COLOR_BG = (106, 159, 181)
 COLOR_TEXT = (0, 0, 255)
 COLOR_TEXT_HIGHLIGHT = (255, 0, 0)
 
-# TODO change so its scaled
-HOVER_OVERLAY = pygame.Surface(
-    (DEFAULT_TILE_SIZE, DEFAULT_TILE_SIZE), pygame.SRCALPHA)
-HOVER_OVERLAY.fill((0, 0, 0, 20))  # alpha 0..255; adjust for darkness
-
 
 class Game_Board:
-    def __init__(self, game_data: GameData = None):
+    def __init__(self, game_data: GameData = None, grid_size: int = 10):
 
-        self.GRID_SIZE = 10  # board size in num tiles
+        self.GRID_SIZE = grid_size  # board size in num tiles
         self.NUM_BOMBS = int(self.GRID_SIZE * self.GRID_SIZE * 0.1)
+        self.TILE_SIZE = int(DEFAULT_BOARD_SIZE /
+                             self.GRID_SIZE)  # tile size in px
+        self.BOARD_SIZE = self.TILE_SIZE * self.GRID_SIZE
 
         self.game_data = game_data
 
-        # self.board = self._generate_board()
         self.tiles = self._generate_board_tiles()
-        # self._place_bombs()
+
         # self._tile_group = pygame.sprite.Group(self.tiles)
         self.board_surface: pygame.Surface = pygame.Surface(
             (
-                DEFAULT_TILE_SIZE * self.GRID_SIZE,
-                DEFAULT_TILE_SIZE * self.GRID_SIZE
+                self.BOARD_SIZE,
+                self.BOARD_SIZE
             )
         )
 
@@ -65,11 +62,6 @@ class Game_Board:
 
     def _get_tile_at_pixel(self, x, y) -> GameTile:
         return self.tiles[y * self.GRID_SIZE + x]
-
-    def _generate_board(self):
-        _board = list(list(0 for _ in range(self.GRID_SIZE))
-                      for _ in range(self.GRID_SIZE))
-        return _board
 
     def _place_bombs(self, first_tile: GameTile = None):
         # Place bombs
@@ -103,11 +95,10 @@ class Game_Board:
     def _generate_board_tiles(self):
         tiles: list[GameTile] = []
 
-        board_width = DEFAULT_TILE_SIZE * self.GRID_SIZE
         board_start_x = (
-            self.game_data.display_buffer.get_width() - board_width) / 2
+            self.game_data.display_buffer.get_width() - self.BOARD_SIZE) / 2
         board_start_y = (
-            self.game_data.display_buffer.get_height() - board_width) / 2
+            self.game_data.display_buffer.get_height() - self.BOARD_SIZE) / 2
 
         for y in range(self.GRID_SIZE):
             for x in range(self.GRID_SIZE):
@@ -115,10 +106,11 @@ class Game_Board:
                 tiles.append(
                     GameTile(
                         center_position=(
-                            x * DEFAULT_TILE_SIZE + DEFAULT_TILE_SIZE / 2 + board_start_x,
-                            y * DEFAULT_TILE_SIZE + DEFAULT_TILE_SIZE / 2 + board_start_y
+                            x * self.TILE_SIZE + self.TILE_SIZE / 2 + board_start_x,
+                            y * self.TILE_SIZE + self.TILE_SIZE / 2 + board_start_y
                         ),
                         tile_position=(x, y),
+                        tile_size=self.TILE_SIZE,
                         text=0,
                         game_data=self.game_data
                     )
@@ -156,15 +148,6 @@ class Game_Board:
         if self.game_data.game_state == GameState.NEWGAME:
             if self.game_over or self.game_won:
                 self.game_data.game_state = GameState.GAMEOVER
-
-        # Scale tile texture to window size
-        # image = pygame.transform.scale(
-        #     image,
-        #     (
-        #         DEFAULT_TILE_SIZE * self.game_data.display_scaling_factor,
-        #         DEFAULT_TILE_SIZE * self.game_data.display_scaling_factor)
-        # )
-        # self._tile_group.draw(self.game_data.screen)
 
     def _update_shadows(self, tile: GameTile):
         "Updates the shadows of tile's neighbours"
