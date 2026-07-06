@@ -95,17 +95,23 @@ def play_level():
     )
 
     win_lose_ui_popup = UI_POPUP_BOX(
-        w=600,
-        h=600,
+        w = 400,
+        h = 150,
         font_size=64,
         game_data=game_data
     )
 
-    ui_boxes = [ui_count_bombs, ui_count_flags, ui_timer, win_lose_ui_popup]
+    ui_boxes:list[Sprite] = [ui_count_bombs, ui_count_flags, ui_timer, win_lose_ui_popup]
+
+    # win_lose_ui_popup.show()
+    # win_lose_ui_popup.set_text("test")
+    # game_data.game_state = GameState.GAMEOVER
+    
+    # game_data.game_board.game_over = True
 
     while game_data.game_state != GameState.QUIT:
         game_data.update()
-
+        
         # Handle Buttons
         for button in buttons:
             ui_action = button.update2()
@@ -122,11 +128,13 @@ def play_level():
 
         for ui_box in ui_boxes:
             ui_box.draw_to()
+            ui_box.update()
 
         # draw game field
         # each game tile is like a button
 
-        print(game_data.game_board.game_won, game_data.game_board.game_over)
+
+        
         if game_data.game_board.game_over or game_data.game_board.game_won:
             game_data.timer_stop()
             win_lose_ui_popup.set_text(f"{'You Win' if game_data.game_board.game_won else 'You Lose'}")
@@ -134,6 +142,9 @@ def play_level():
                 colors.GREEN if game_data.game_board.game_won else colors.RED
             )
             win_lose_ui_popup.show()
+        else:
+            win_lose_ui_popup.hide()
+            
 
         #     game_data.game_state = GameState.GAMEOVER
         # if game_board.game_won:

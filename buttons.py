@@ -57,6 +57,7 @@ class Button(Sprite):
         ]
 
         self.action = action
+        self.pressed = False
 
         super().__init__()
 
@@ -68,25 +69,25 @@ class Button(Sprite):
     def rect(self):
         return self.rects[1] if self._mouse_over else self.rects[0]
 
-    def update(self, mouse_pos, mouse_button):
+    def update(self):
         """ Updates the mouse_over variable and returns the button's
             action value when clicked.
         """
-        if self.rect.collidepoint(mouse_pos):
-            self._mouse_over = True
-            if mouse_button == 1:  # Left mouse button
-                return self.action
-        else:
-            self._mouse_over = False
-            
-    def update2(self):
-        """ Updates the mouse_over variable and returns the button's
-            action value when clicked.
-        """
+        self.pressed = False
+
+        # print(
+        #     self._mouse_over,
+        #     self.rect,
+        #     self.game_data.mouse_pos,
+        #     self.pressed,
+        #     self.game_data.mouse_button
+        # )
+
         if self.rect.collidepoint(self.game_data.mouse_pos):
             self._mouse_over = True
             if self.game_data.mouse_button == 1:  # Left mouse button
-                return self.action
+                self.pressed = True
+                # return self.action
         else:
             self._mouse_over = False
 
