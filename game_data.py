@@ -184,6 +184,9 @@ class GameData:
 
         self.display.fill(BLACK)
         self.display_buffer.fill(BLUE)
+        
+        # print(game_data.game_board.game_won, game_data.game_board.game_over)
+        
 
         # print(game_data.game_board.game_won, game_data.game_board.game_over)
 

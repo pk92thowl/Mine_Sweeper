@@ -149,7 +149,7 @@ def play_level():
     fps_max = 0
     while game_data.game_state != GameState.QUIT:
         game_data.update()
-
+        
         # Handle Buttons
         for button in buttons:
             ui_action = button.update2()
@@ -167,6 +167,7 @@ def play_level():
         for ui_box in ui_boxes:
             ui_box.update()
             ui_box.draw_to()
+            ui_box.update()
 
         # draw game field
         # each game tile is like a button
