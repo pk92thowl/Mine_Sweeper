@@ -187,13 +187,14 @@ def play_level():
         TutorialStep(
             title="Die Zahlen",
             lines=[
-                "Eine Zahl auf einem aufgedeckten Feld zeigt,",
-                "wie viele Minen in den 8 Nachbarfeldern liegen.",
+                "Eine Zahl zeigt, wie viele Minen in den",
+                "8 Nachbarfeldern liegen.",
                 "",
-                "Leere Felder decken ihre Nachbarn",
-                "automatisch mit auf.",
+                "Beispiel: Die '2' hat genau zwei Minen",
+                "als Nachbarn. Leere Felder decken ihre",
+                "Nachbarn automatisch mit auf.",
             ],
-            highlight=board_rect,
+            image=tutorial.create_number_example_surface(tile_size=64),
         ),
         TutorialStep(
             title="Flaggen setzen",

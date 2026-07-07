@@ -65,21 +65,121 @@ def set_tutorial_done():
 ####################################################################################################
 class TutorialStep:
     def __init__(self, title: str, lines: list[str],
-                 highlight: Rect | None = None):
+                 highlight: Rect | None = None,
+                 image: pygame.Surface | None = None):
         """
         Args:
             title     - Überschrift des Schritts
             lines     - Textzeilen mit der Erklärung
             highlight - optionaler Bereich, der hervorgehoben wird
+            image     - optionales Beispielbild, das unter dem Text
+                        angezeigt wird
         """
         self.title = title
         self.lines = lines
         self.highlight = highlight
+        self.image = image
 
 
 ####################################################################################################
-# Tutorial-Overlay
+# Beispielbild für den "Zahlen"-Schritt
 ####################################################################################################
+def create_number_example_surface(tile_size: int = 64) -> pygame.Surface:
+    """Erzeugt ein kleines 3x3-Beispielfeld im Look des echten Spiels.
+
+    Das mittlere Feld zeigt eine '2', daneben liegen zwei (aufgedeckte)
+    Minen - so sieht der Spieler direkt, was die Zahl bedeutet.
+    Die restlichen Felder sind verdeckt (Sand).
+    """
+    # Grid-Inhalt: None = verdeckt, 'm' = Mine, Zahl = aufgedecktes Zahlenfeld
+    grid = [
+        [1,    'm',  None],
+        [None, 2,    'm'],
+        [None, None, None],
+    ]
+
+    size = tile_size * 3
+    surface = pygame.Surface((size, size), pygame.SRCALPHA)
+
+    # Assets laden (mit Fallback, falls sie fehlen)
+    try:
+        sand_img = pygame.image.load(Path("assets/sand_2.png")).convert_alpha()
+        sand_img = pygame.transform.scale(sand_img, (tile_size, tile_size))
+    except (pygame.error, FileNotFoundError):
+        sand_img = pygame.Surface((tile_size, tile_size))
+        sand_img.fill((214, 189, 138))
+
+    try:
+        mine_img = pygame.image.load(Path("assets/mine_2.png")).convert_alpha()
+        mine_img = pygame.transform.scale(
+            mine_img, (int(tile_size * 0.7), int(tile_size * 0.7)))
+    except (pygame.error, FileNotFoundError):
+        mine_img = pygame.Surface(
+            (int(tile_size * 0.7), int(tile_size * 0.7)), pygame.SRCALPHA)
+        pygame.draw.circle(
+            mine_img, colors.BLACK,
+            (mine_img.get_width() // 2, mine_img.get_height() // 2),
+            mine_img.get_width() // 2
+        )
+
+    # Abdunkelung für aufgedeckte Felder ("Loch"-Optik, vereinfacht)
+    hole_overlay = pygame.Surface((tile_size, tile_size), pygame.SRCALPHA)
+    hole_overlay.fill((0, 0, 0, 90))
+
+    font = pygame.freetype.SysFont("Courier", int(tile_size * 0.6), bold=True)
+
+    # Zahlenfarben wie im Spiel: 1 = blau, 2 = gelb, 3+ = rot
+    def number_color(n: int):
+        if n == 1:
+            return colors.BLUE
+        if n == 2:
+            return colors.YELLOW
+        return colors.RED
+
+    for y in range(3):
+        for x in range(3):
+            px, py = x * tile_size, y * tile_size
+            surface.blit(sand_img, (px, py))
+
+            content = grid[y][x]
+            if content is not None:
+                # aufgedecktes Feld abdunkeln
+                surface.blit(hole_overlay, (px, py))
+
+                if content == 'm':
+                    surface.blit(
+                        mine_img,
+                        mine_img.get_rect(
+                            center=(px + tile_size / 2, py + tile_size / 2))
+                    )
+                else:
+                    text_surf, _ = font.render(
+                        str(content), fgcolor=number_color(content),
+                        bgcolor=None)
+                    surface.blit(
+                        text_surf,
+                        text_surf.get_rect(
+                            center=(px + tile_size / 2, py + tile_size / 2))
+                    )
+
+    # Gitterlinien + Rahmen
+    for i in range(4):
+        pygame.draw.line(surface, (120, 100, 70),
+                         (i * tile_size, 0), (i * tile_size, size), 2)
+        pygame.draw.line(surface, (120, 100, 70),
+                         (0, i * tile_size), (size, i * tile_size), 2)
+
+    # Markierung: Pfeile/Kreis um die '2' herum wären übertrieben,
+    # aber ein dezenter gelber Rahmen um das Zahlenfeld hilft
+    pygame.draw.rect(
+        surface, colors.YELLOW,
+        Rect(tile_size, tile_size, tile_size, tile_size), 3
+    )
+
+    return surface
+
+
+
 class Tutorial:
     PANEL_W = 560
     BTN_W = 190
@@ -133,8 +233,10 @@ class Tutorial:
         step = self._current_step
         buffer_rect = self.game_data.display_buffer.get_rect()
 
-        # Panelhöhe abhängig von der Textmenge
+        # Panelhöhe abhängig von der Textmenge (+ optionales Bild)
         panel_h = 90 + len(step.lines) * 26 + self.BTN_H + 30
+        if step.image is not None:
+            panel_h += step.image.get_height() + 15
 
         panel = Rect(0, 0, self.PANEL_W, panel_h)
         panel.center = buffer_rect.center
@@ -273,6 +375,12 @@ class Tutorial:
                     line, fgcolor=(40, 40, 40), bgcolor=None)
                 buffer.blit(line_surf, (x, y))
             y += 26
+
+        # optionales Beispielbild, zentriert unter dem Text
+        if step.image is not None:
+            img_x = panel.centerx - step.image.get_width() / 2
+            buffer.blit(step.image, (img_x, y + 5))
+            y += step.image.get_height() + 15
 
         # Buttons
         self._draw_button(
