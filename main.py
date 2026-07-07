@@ -7,8 +7,9 @@ from pygame.locals import QUIT
 from enum import Enum
 
 import colors
+import sounds
 from buttons import Button, ButtonActions
-from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR, UI_SCOREBOARD, UI_NAME_INPUT
+from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR, UI_SCOREBOARD, UI_NAME_INPUT, UI_SOUND_TOGGLE
 from game_data import GameData, GameState
 from game_field import DEFAULT_BOARD_SIZE
 
@@ -20,6 +21,7 @@ game_data = GameData()
 
 def main():
     pygame.init()
+    sounds.init()
 
     game_data.init()
 
@@ -57,8 +59,9 @@ def play_level():
     BOX_H = 50
     GAP_TO_BOARD = 10  # kleine Lücke zwischen UI und Spielbrett
 
-    W_BOMBS, W_FLAGS, W_TIMER, W_DIFF = 150, 160, 200, 160
-    total_w = W_BOMBS + W_FLAGS + W_TIMER + W_DIFF
+    # Breite aller UI elemente
+    W_BOMBS, W_FLAGS, W_TIMER, W_DIFF, W_SOUND = 150, 160, 200, 160, 100
+    total_w = W_BOMBS + W_FLAGS + W_TIMER + W_DIFF + W_SOUND
 
     board_top = (game_data.display_buffer.get_height() -
                  DEFAULT_BOARD_SIZE) / 2
@@ -114,6 +117,14 @@ def play_level():
         align_relative_to=(ui_timer, 1)
     )
 
+    ui_sound_toggle = UI_SOUND_TOGGLE(
+        rect=Rect(0, bar_y, W_SOUND, BOX_H),
+        font_name="Courier",
+        font_size=20,
+        game_data=game_data,
+        align_relative_to=(ui_difficulty, 1)  # rechts neben Difficulty
+    )
+
     # Namenseingabe links oben, direkt über dem Scoreboard
     ui_name_input = UI_NAME_INPUT(
         rect=Rect(30, 80, 290, 60),
@@ -146,6 +157,7 @@ def play_level():
         ui_name_input,
         ui_scoreboard,
         win_lose_ui_popup,
+        ui_sound_toggle
     ]
 
     # win_lose_ui_popup.show()
@@ -225,7 +237,7 @@ def play_level():
 
         if fps > fps_max:
             fps_max = fps
-        print(fps, fps_min, fps_max)
+        # print(fps, fps_min, fps_max)
 
 
 if __name__ == "__main__":

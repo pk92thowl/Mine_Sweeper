@@ -6,6 +6,7 @@ from game_data import GameData
 from game_states import DifficultyLevel
 from buttons import Button
 import colors
+import sounds
 
 
 class UI_STAT_BOX(Sprite):
@@ -398,6 +399,101 @@ class UI_DIFFICULTY_SELECTOR(Sprite):
             self.game_data.display_buffer.blit(
                 self.HOVER_OVERLAY, self.rect.topleft)
 
+
+
+class UI_SOUND_TOGGLE(Sprite):
+    """Klickbarer Button zum An-/Ausschalten der Sounds."""
+
+    def __init__(self, rect, font_name="Courier", font_size=20,
+                 outer_color=(180, 180, 180), outer_border=(120, 120, 120),
+                 inner_bg=(255, 255, 255), padding=6,
+                 game_data: GameData = None,
+                 align_relative_to: tuple[Sprite, int] = None):
+        super().__init__()
+        self.rect = pygame.Rect(rect)
+
+        if align_relative_to is not None:
+            if align_relative_to[1] == 1:    # rechts daneben
+                self.rect.left = align_relative_to[0].rect.right
+            elif align_relative_to[1] == 2:  # darunter
+                self.rect.top = align_relative_to[0].rect.bottom
+            elif align_relative_to[1] == 3:  # links daneben
+                self.rect.right = align_relative_to[0].rect.left
+            elif align_relative_to[1] == 4:  # darüber
+                self.rect.bottom = align_relative_to[0].rect.top
+
+        self.game_data = game_data
+        self.outer_color = outer_color
+        self.outer_border = outer_border
+        self.outer_border_width = 2
+        self.inner_bg = inner_bg
+        self.padding = padding
+
+        self.font_label = pygame.freetype.SysFont(font_name, 12, bold=False)
+        self.font_value = pygame.freetype.SysFont(
+            font_name, font_size, bold=True)
+
+        self._mouse_over = False
+        self._shown_muted = None
+        self._cached_surface = None
+        self._dirty = True
+
+        self.HOVER_OVERLAY = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        self.HOVER_OVERLAY.fill((0, 0, 0, 25))
+
+    def _update_cached_surface_if_needed(self):
+        if not self._dirty and self._cached_surface is not None:
+            return
+
+        w, h = self.rect.size
+        surf = pygame.Surface((w, h), pygame.SRCALPHA)
+
+        pygame.draw.rect(surf, self.outer_color, (0, 0, w, h))
+        inner = pygame.Rect(self.padding, self.padding,
+                            w - self.padding * 2, h - self.padding * 2)
+        pygame.draw.rect(surf, self.inner_bg, inner)
+
+        # kleines Label oben
+        label_surf, _ = self.font_label.render(
+            "Sound", fgcolor=(90, 90, 90), bgcolor=None)
+        surf.blit(label_surf, (inner.left + 6, inner.top + 3))
+
+        # aktueller Zustand
+        muted = sounds.is_muted()
+        text = "Aus" if muted else "An"
+        color = (200, 0, 0) if muted else (0, 140, 0)
+        value_surf, _ = self.font_value.render(
+            text, fgcolor=color, bgcolor=None)
+        vx = inner.centerx - value_surf.get_width() / 2
+        vy = inner.top + 3 + label_surf.get_height() + 4
+        surf.blit(value_surf, (vx, vy))
+
+        pygame.draw.rect(surf, self.outer_border,
+                         (0, 0, w, h), self.outer_border_width)
+
+        self._cached_surface = surf
+        self._shown_muted = muted
+        self._dirty = False
+
+    def update(self, *args, **kwargs):
+        if self._shown_muted != sounds.is_muted():
+            self._dirty = True
+
+        if self.rect.collidepoint(self.game_data.mouse_pos):
+            self._mouse_over = True
+            if self.game_data.mouse_button == 1:
+                sounds.toggle_mute()
+                self._dirty = True
+        else:
+            self._mouse_over = False
+
+    def draw_to(self):
+        self._update_cached_surface_if_needed()
+        self.game_data.display_buffer.blit(
+            self._cached_surface, self.rect.topleft)
+        if self._mouse_over:
+            self.game_data.display_buffer.blit(
+                self.HOVER_OVERLAY, self.rect.topleft)
 
 class UI_NAME_INPUT(Sprite):
     """Klickbares Eingabefeld für den Spielernamen im Stil der UI_STAT_BOX.

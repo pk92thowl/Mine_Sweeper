@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 from game_states import GameState
 from game_tile import GameTile, TileState
-import colors
+import sounds
 
 # from game_data import GameData
 
@@ -153,6 +153,11 @@ class Game_Board:
             if self.game_over or self.game_won:
                 self.game_data.timer_stop()
                 self.game_data.game_state = GameState.GAMEOVER
+                
+                if self.game_over:
+                    sounds.play_lose()
+                else:
+                    sounds.play_win()
 
     def _update_shadows(self, tile: GameTile):
         "Updates the shadows of tile's neighbours"

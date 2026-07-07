@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from game_data import GameData
 
 import colors
+import sounds
 
 from game_states import GameState
 # from game_data import GameData, GameState
@@ -307,7 +308,7 @@ class GameTile(Sprite):
         #  self.image.get_rect(center=self.center_position)
         return self.image.get_rect(center=self.center_position)
 
-    def reveal(self):
+    def reveal(self, play_sound=False):
 
         if self.state == TileState.HIDDEN:
             self.state = TileState.REVEALED
@@ -318,15 +319,27 @@ class GameTile(Sprite):
                 # Game over
                 self.game_over = True
 
+                if play_sound:
+                    sounds.play_explosion()
+            else:
+                if play_sound:
+                    sounds.play_reveal()
+
             return self.state
         return None
 
-    def flag(self):
+    def flag(self, play_sound=False):
         if self.state == TileState.HIDDEN:
             self.state = TileState.FLAGGED
 
+            if play_sound:
+                sounds.play_flag_place()
+
         elif self.state == TileState.FLAGGED:
             self.state = TileState.HIDDEN
+
+            if play_sound:
+                sounds.play_flag_remove()
 
         self._image_cache_dirty = True
         return self.state
@@ -339,10 +352,10 @@ class GameTile(Sprite):
         if self.rect.collidepoint(self.game_data.mouse_pos) and self.game_data.game_state == GameState.NEWGAME:
             self._mouse_over = True
             if self.game_data.mouse_button == 1:  # Left mouse button
-                return self.reveal()
+                return self.reveal(True)
 
             elif self.game_data.mouse_button == 3:  # Right mouse button
-                return self.flag()
+                return self.flag(True)
         else:
             self._mouse_over = False
 
