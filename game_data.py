@@ -22,7 +22,7 @@ PATH_SCORE_FILE = Path("scores.json")
 
 # Brettgröße und Bombenanzahl pro Schwierigkeitsstufe
 DIFFICULTY_SETTINGS = {
-    DifficultyLevel.EASY: {"grid_size": 8, "num_bombs": 8},
+    DifficultyLevel.EASY: {"grid_size": 8, "num_bombs": 6},
     DifficultyLevel.MEDIUM: {"grid_size": 12, "num_bombs": 18},
     DifficultyLevel.HARD: {"grid_size": 16, "num_bombs": 30},
 }
@@ -31,6 +31,8 @@ DIFFICULTY_SETTINGS = {
 class GameData:
     mouse_pos = (0, 0)
     mouse_button = None
+    # KEYDOWN-Events des aktuellen Frames (für Texteingabe)
+    key_events: list = []
     game_state: GameState = None
 
     display: pygame.Surface = None
@@ -57,7 +59,7 @@ class GameData:
             (DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT))
         self.game_state = GameState.NEWGAME
 
-        self.player_name = "test"
+        self.player_name = "Spieler"
         self.difficulty = DifficultyLevel.EASY
 
         self.load_score()
@@ -176,6 +178,7 @@ class GameData:
             self.mouse_pos[1] / self.display_scaling_factor
         )
         self.mouse_button = None  # Reset mouse button state each frame
+        self.key_events = []  # Reset keyboard events each frame
 
         self.display_rescaled = False
         self.display_buffer = pygame.Surface(
@@ -184,9 +187,8 @@ class GameData:
 
         self.display.fill(BLACK)
         self.display_buffer.fill(BLUE)
-        
+
         # print(game_data.game_board.game_won, game_data.game_board.game_over)
-        
 
         # print(game_data.game_board.game_won, game_data.game_board.game_over)
 
@@ -195,6 +197,10 @@ class GameData:
 
             if event.type == pygame.MOUSEBUTTONUP:
                 self.mouse_button = event.button
+
+            if event.type == pygame.KEYUP:
+                # if event.type == pygame.KEYDOWN:
+                self.key_events.append(event)
 
             if event.type == pygame.VIDEORESIZE:
 

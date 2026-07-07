@@ -8,7 +8,7 @@ from enum import Enum
 
 import colors
 from buttons import Button, ButtonActions
-from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR, UI_SCOREBOARD
+from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR, UI_SCOREBOARD, UI_NAME_INPUT
 from game_data import GameData, GameState
 from game_field import DEFAULT_BOARD_SIZE
 
@@ -60,7 +60,8 @@ def play_level():
     W_BOMBS, W_FLAGS, W_TIMER, W_DIFF = 150, 160, 200, 160
     total_w = W_BOMBS + W_FLAGS + W_TIMER + W_DIFF
 
-    board_top = (game_data.display_buffer.get_height() - DEFAULT_BOARD_SIZE) / 2
+    board_top = (game_data.display_buffer.get_height() -
+                 DEFAULT_BOARD_SIZE) / 2
     bar_y = board_top - BOX_H - GAP_TO_BOARD
     bar_x = (game_data.display_buffer.get_width() - total_w) / 2
 
@@ -113,6 +114,14 @@ def play_level():
         align_relative_to=(ui_timer, 1)
     )
 
+    # Namenseingabe links oben, direkt über dem Scoreboard
+    ui_name_input = UI_NAME_INPUT(
+        rect=Rect(30, 80, 290, 60),
+        font_name="Courier",
+        font_size=18,
+        game_data=game_data
+    )
+
     # Scoreboard links neben dem Spielfeld
     # (Board ist 800px breit und zentriert -> linker Rand hat ~350px Platz)
     ui_scoreboard = UI_SCOREBOARD(
@@ -134,6 +143,7 @@ def play_level():
         ui_count_flags,
         ui_timer,
         ui_difficulty,
+        ui_name_input,
         ui_scoreboard,
         win_lose_ui_popup,
     ]
@@ -149,7 +159,7 @@ def play_level():
     fps_max = 0
     while game_data.game_state != GameState.QUIT:
         game_data.update()
-        
+
         # Handle Buttons
         for button in buttons:
             ui_action = button.update2()
@@ -167,13 +177,12 @@ def play_level():
         for ui_box in ui_boxes:
             ui_box.update()
             ui_box.draw_to()
-            ui_box.update()
 
         # draw game field
         # each game tile is like a button
 
         if game_data.game_board.game_over or game_data.game_board.game_won:
-            
+
             win_lose_ui_popup.set_text(
                 f"{'You Win' if game_data.game_board.game_won else 'You Lose'}"
             )
@@ -213,7 +222,7 @@ def play_level():
         fps = clock.get_fps().__round__(2)
         if fps < fps_min and fps != 0:
             fps_min = fps
-        
+
         if fps > fps_max:
             fps_max = fps
         print(fps, fps_min, fps_max)

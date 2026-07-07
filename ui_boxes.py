@@ -399,6 +399,166 @@ class UI_DIFFICULTY_SELECTOR(Sprite):
                 self.HOVER_OVERLAY, self.rect.topleft)
 
 
+class UI_NAME_INPUT(Sprite):
+    """Klickbares Eingabefeld für den Spielernamen im Stil der UI_STAT_BOX.
+
+    Klick auf die Box aktiviert die Eingabe, danach kann getippt werden.
+    Enter oder Klick außerhalb bestätigt, Escape bricht ab.
+    """
+
+    MAX_NAME_LEN = 15  # passt zur Namensbreite im Scoreboard
+
+    def __init__(self, rect, font_name="Courier", font_size=18,
+                 outer_color=(180, 180, 180), outer_border=(120, 120, 120),
+                 inner_bg=(255, 255, 255), padding=6,
+                 game_data: GameData = None,
+                 align_relative_to: tuple[Sprite, int] = None):
+        super().__init__()
+        self.rect = pygame.Rect(rect)
+
+        # gleiche Ausrichtungslogik wie UI_STAT_BOX
+        if align_relative_to is not None:
+            if align_relative_to[1] == 1:    # rechts daneben
+                self.rect.left = align_relative_to[0].rect.right
+            elif align_relative_to[1] == 2:  # darunter
+                self.rect.top = align_relative_to[0].rect.bottom
+            elif align_relative_to[1] == 3:  # links daneben
+                self.rect.right = align_relative_to[0].rect.left
+            elif align_relative_to[1] == 4:  # darüber
+                self.rect.bottom = align_relative_to[0].rect.top
+
+        self.game_data = game_data
+        self.outer_color = outer_color
+        self.outer_border = outer_border
+        self.outer_border_width = 2
+        self.inner_bg = inner_bg
+        self.inner_bg_active = (255, 255, 220)  # leicht gelb, wenn aktiv
+        self.padding = padding
+
+        self.font_label = pygame.freetype.SysFont(font_name, 12, bold=False)
+        self.font_value = pygame.freetype.SysFont(
+            font_name, font_size, bold=True)
+
+        self._mouse_over = False
+        self._active = False
+        self._buffer = ""
+        self._cursor_visible = True
+
+        self._shown_name = None  # zuletzt gerenderter Name
+        self._cached_surface = None
+        self._dirty = True
+
+        self.HOVER_OVERLAY = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+        self.HOVER_OVERLAY.fill((0, 0, 0, 25))
+
+    def _confirm(self):
+        name = self._buffer.strip()
+        if name:
+            self.game_data.player_name = name
+        self._active = False
+        self._dirty = True
+
+    def _cancel(self):
+        self._active = False
+        self._dirty = True
+
+    def _handle_key_events(self):
+        for event in self.game_data.key_events:
+            if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                self._confirm()
+            elif event.key == pygame.K_ESCAPE:
+                self._cancel()
+            elif event.key == pygame.K_BACKSPACE:
+                if self._buffer:
+                    self._buffer = self._buffer[:-1]
+                    self._dirty = True
+            elif event.unicode and event.unicode.isprintable():
+                if len(self._buffer) < self.MAX_NAME_LEN:
+                    self._buffer += event.unicode
+                    self._dirty = True
+
+    def _update_cached_surface_if_needed(self):
+        if not self._dirty and self._cached_surface is not None:
+            return
+
+        w, h = self.rect.size
+        surf = pygame.Surface((w, h), pygame.SRCALPHA)
+
+        # Hintergrund + innerer Bereich
+        pygame.draw.rect(surf, self.outer_color, (0, 0, w, h))
+        inner = pygame.Rect(self.padding, self.padding,
+                            w - self.padding * 2, h - self.padding * 2)
+        bg = self.inner_bg_active if self._active else self.inner_bg
+        pygame.draw.rect(surf, bg, inner)
+
+        # kleines Label oben
+        label_text = "Name (Enter = OK)" if self._active \
+            else "Spieler (klicken zum Aendern)"
+        label_surf, _ = self.font_label.render(
+            label_text, fgcolor=(90, 90, 90), bgcolor=None)
+        surf.blit(label_surf, (inner.left + 6, inner.top + 3))
+
+        # aktueller Name bzw. Eingabepuffer
+        if self._active:
+            value = self._buffer
+            if self._cursor_visible:
+                value += "_"
+            color = (0, 0, 200)
+        else:
+            value = self.game_data.player_name
+            color = (0, 0, 0)
+
+        if value:
+            value_surf, _ = self.font_value.render(
+                value, fgcolor=color, bgcolor=None)
+            vx = inner.left + 6
+            vy = inner.top + 3 + label_surf.get_height() + 6
+            surf.blit(value_surf, (vx, vy))
+
+        # Rahmen
+        border = (0, 0, 200) if self._active else self.outer_border
+        pygame.draw.rect(surf, border, (0, 0, w, h), self.outer_border_width)
+
+        self._cached_surface = surf
+        self._shown_name = self.game_data.player_name
+        self._dirty = False
+
+    def update(self, *args, **kwargs):
+        # neu rendern, falls sich der Name von außen geändert hat
+        if not self._active and self._shown_name != self.game_data.player_name:
+            self._dirty = True
+
+        if self.rect.collidepoint(self.game_data.mouse_pos):
+            self._mouse_over = True
+            if self.game_data.mouse_button == 1 and not self._active:
+                # Eingabe aktivieren, mit aktuellem Namen vorbelegen
+                self._active = True
+                self._buffer = self.game_data.player_name
+                self._dirty = True
+        else:
+            self._mouse_over = False
+            if self.game_data.mouse_button == 1 and self._active:
+                # Klick außerhalb bestätigt die Eingabe
+                self._confirm()
+
+        if self._active:
+            self._handle_key_events()
+
+            # blinkender Cursor
+            blink = (pygame.time.get_ticks() // 400) % 2 == 0
+            if blink != self._cursor_visible:
+                self._cursor_visible = blink
+                self._dirty = True
+
+    def draw_to(self):
+        self._update_cached_surface_if_needed()
+        self.game_data.display_buffer.blit(
+            self._cached_surface, self.rect.topleft)
+        if self._mouse_over and not self._active:
+            self.game_data.display_buffer.blit(
+                self.HOVER_OVERLAY, self.rect.topleft)
+
+
 class UI_SCOREBOARD(Sprite):
     """Zeigt die Top-5-Zeiten der aktuell gewählten Schwierigkeitsstufe.
 
@@ -432,8 +592,10 @@ class UI_SCOREBOARD(Sprite):
         self.inner_bg = inner_bg
         self.padding = padding
 
-        self.font_title = pygame.freetype.SysFont(font_name, font_size, bold=True)
-        self.font_row = pygame.freetype.SysFont(font_name, font_size - 2, bold=False)
+        self.font_title = pygame.freetype.SysFont(
+            font_name, font_size, bold=True)
+        self.font_row = pygame.freetype.SysFont(
+            font_name, font_size - 2, bold=False)
         self.font_row_highlight = pygame.freetype.SysFont(
             font_name, font_size - 2, bold=True)
 
