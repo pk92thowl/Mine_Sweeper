@@ -8,6 +8,8 @@ from enum import Enum
 
 import colors
 import sounds
+import tutorial
+from tutorial import Tutorial, TutorialStep, UI_TUTORIAL_BUTTON
 from buttons import Button, ButtonActions
 from ui_boxes import UI_STAT_BOX, UI_POPUP_BOX, UI_DIFFICULTY_SELECTOR, UI_SCOREBOARD, UI_NAME_INPUT, UI_SOUND_TOGGLE
 from game_data import GameData, GameState
@@ -61,7 +63,8 @@ def play_level():
 
     # Breite aller UI elemente
     W_BOMBS, W_FLAGS, W_TIMER, W_DIFF, W_SOUND = 150, 160, 200, 160, 100
-    total_w = W_BOMBS + W_FLAGS + W_TIMER + W_DIFF + W_SOUND
+    W_HELP = 100  # Hilfe-Button (Tutorial)
+    total_w = W_BOMBS + W_FLAGS + W_TIMER + W_DIFF + W_SOUND + W_HELP
 
     board_top = (game_data.display_buffer.get_height() -
                  DEFAULT_BOARD_SIZE) / 2
@@ -127,7 +130,7 @@ def play_level():
 
     # Namenseingabe links oben, direkt über dem Scoreboard
     ui_name_input = UI_NAME_INPUT(
-        rect=Rect(30, 80, 290, 60),
+        rect=Rect(30, 100, 290, 60),
         font_name="Courier",
         font_size=18,
         game_data=game_data
@@ -136,7 +139,7 @@ def play_level():
     # Scoreboard links neben dem Spielfeld
     # (Board ist 800px breit und zentriert -> linker Rand hat ~350px Platz)
     ui_scoreboard = UI_SCOREBOARD(
-        rect=Rect(30, 150, 290, 260),
+        rect=Rect(30, 170, 290, 260),
         font_name="Courier",
         font_size=18,
         game_data=game_data
@@ -149,6 +152,110 @@ def play_level():
         game_data=game_data
     )
 
+    # --- Tutorial für neue Spieler ---
+    board_rect = Rect(
+        (game_data.display_buffer.get_width() - DEFAULT_BOARD_SIZE) / 2,
+        (game_data.display_buffer.get_height() - DEFAULT_BOARD_SIZE) / 2,
+        DEFAULT_BOARD_SIZE,
+        DEFAULT_BOARD_SIZE
+    )
+    status_bar_rect = Rect(bar_x, bar_y, total_w, BOX_H)
+    scoreboard_area_rect = ui_name_input.rect.union(ui_scoreboard.rect)
+
+    tutorial_steps = [
+        TutorialStep(
+            title="Willkommen bei Minesweeper!",
+            lines=[
+                "Ziel des Spiels: Decke alle Felder auf,",
+                "ohne dabei auf eine Mine zu klicken.",
+                "",
+                "Diese kurze Einführung zeigt dir die",
+                "wichtigsten Funktionen. Du kannst sie",
+                "jederzeit mit 'Überspringen' oder Escape beenden.",
+            ],
+        ),
+        TutorialStep(
+            title="Das Spielfeld",
+            lines=[
+                "Linksklick deckt ein Feld auf.",
+                "",
+                "Keine Sorge: Der erste Klick ist immer sicher,",
+                "erst danach werden die Minen platziert.",
+            ],
+            highlight=board_rect,
+        ),
+        TutorialStep(
+            title="Die Zahlen",
+            lines=[
+                "Eine Zahl auf einem aufgedeckten Feld zeigt,",
+                "wie viele Minen in den 8 Nachbarfeldern liegen.",
+                "",
+                "Leere Felder decken ihre Nachbarn",
+                "automatisch mit auf.",
+            ],
+            highlight=board_rect,
+        ),
+        TutorialStep(
+            title="Flaggen setzen",
+            lines=[
+                "Rechtsklick markiert ein Feld mit einer Flagge,",
+                "wenn du dort eine Mine vermutest.",
+                "",
+                "Ein weiterer Rechtsklick entfernt die Flagge.",
+                "Der Zähler oben zeigt deine gesetzten Flaggen.",
+            ],
+            highlight=ui_count_flags.rect,
+        ),
+        TutorialStep(
+            title="Die Statusleiste",
+            lines=[
+                "Hier siehst du die Anzahl der Minen, deine",
+                "Flaggen und die laufende Zeit.",
+                "",
+                "Mit einem Klick auf 'Difficulty' wechselst du",
+                "die Schwierigkeitsstufe, mit 'Sound' schaltest",
+                "du die Töne an oder aus.",
+            ],
+            highlight=status_bar_rect,
+        ),
+        TutorialStep(
+            title="Name & Bestenliste",
+            lines=[
+                "Klicke auf das Namensfeld, um deinen",
+                "Spielernamen einzugeben.",
+                "",
+                "Deine besten Zeiten landen in der",
+                "Top-5-Bestenliste der jeweiligen Stufe.",
+            ],
+            highlight=scoreboard_area_rect,
+        ),
+        TutorialStep(
+            title="Viel Erfolg!",
+            lines=[
+                "Das war's schon - du bist startklar.",
+                "",
+                "Tipp: Über den 'Hilfe'-Button (?) oben rechts",
+                "kannst du dieses Tutorial jederzeit",
+                "erneut ansehen.",
+            ],
+        ),
+    ]
+
+    game_tutorial = Tutorial(game_data=game_data, steps=tutorial_steps)
+
+    ui_tutorial_button = UI_TUTORIAL_BUTTON(
+        rect=Rect(0, bar_y, W_HELP, BOX_H),
+        font_name="Courier",
+        font_size=20,
+        game_data=game_data,
+        tutorial=game_tutorial,
+        align_relative_to=(ui_sound_toggle, 1)  # rechts neben Sound
+    )
+
+    # Tutorial nur beim ersten Start automatisch anzeigen
+    if not tutorial.is_tutorial_done():
+        game_tutorial.start()
+
     ui_boxes: list[Sprite] = [
         ui_count_bombs,
         ui_count_flags,
@@ -157,7 +264,8 @@ def play_level():
         ui_name_input,
         ui_scoreboard,
         win_lose_ui_popup,
-        ui_sound_toggle
+        ui_sound_toggle,
+        ui_tutorial_button
     ]
 
     # win_lose_ui_popup.show()
@@ -171,6 +279,14 @@ def play_level():
     fps_max = 0
     while game_data.game_state != GameState.QUIT:
         game_data.update()
+
+        # Tutorial verarbeitet Eingaben zuerst. Ist es aktiv, werden
+        # Maus- und Tastatureingaben "verbraucht", damit das Spiel
+        # darunter nicht darauf reagiert.
+        if game_tutorial.update():
+            game_data.mouse_pos = (0,0)
+            game_data.mouse_button = None
+            game_data.key_events = []
 
         # Handle Buttons
         for button in buttons:
@@ -204,6 +320,9 @@ def play_level():
             win_lose_ui_popup.show()
         else:
             win_lose_ui_popup.hide()
+
+        # Tutorial-Overlay zuletzt zeichnen (liegt über allem)
+        game_tutorial.draw_to()
 
         # print(
         #     game_data.display_buffer,
