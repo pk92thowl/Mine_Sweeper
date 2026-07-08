@@ -130,7 +130,8 @@ def play_level():
 
     # Namenseingabe links oben, direkt über dem Scoreboard
     ui_name_input = UI_NAME_INPUT(
-        rect=Rect(30, 100, 290, 60),
+        # rect=Rect(30, 120, 290, 60),
+        rect=Rect(30, game_data.game_board.board_start_y, 290, 60),
         font_name="Courier",
         font_size=18,
         game_data=game_data
@@ -139,7 +140,8 @@ def play_level():
     # Scoreboard links neben dem Spielfeld
     # (Board ist 800px breit und zentriert -> linker Rand hat ~350px Platz)
     ui_scoreboard = UI_SCOREBOARD(
-        rect=Rect(30, 170, 290, 260),
+        # rect=Rect(30, 190, 290, 260),
+        rect=Rect(30, game_data.game_board.board_start_y+70, 290, 260),
         font_name="Courier",
         font_size=18,
         game_data=game_data
@@ -153,12 +155,6 @@ def play_level():
     )
 
     # --- Tutorial für neue Spieler ---
-    board_rect = Rect(
-        (game_data.display_buffer.get_width() - DEFAULT_BOARD_SIZE) / 2,
-        (game_data.display_buffer.get_height() - DEFAULT_BOARD_SIZE) / 2,
-        DEFAULT_BOARD_SIZE,
-        DEFAULT_BOARD_SIZE
-    )
     status_bar_rect = Rect(bar_x, bar_y, total_w, BOX_H)
     scoreboard_area_rect = ui_name_input.rect.union(ui_scoreboard.rect)
 
@@ -182,7 +178,7 @@ def play_level():
                 "Keine Sorge: Der erste Klick ist immer sicher,",
                 "erst danach werden die Minen platziert.",
             ],
-            highlight=board_rect,
+            highlight=game_data.game_board.border_rect,
         ),
         TutorialStep(
             title="Die Zahlen",
@@ -285,7 +281,7 @@ def play_level():
         # Maus- und Tastatureingaben "verbraucht", damit das Spiel
         # darunter nicht darauf reagiert.
         if game_tutorial.update():
-            game_data.mouse_pos = (0,0)
+            game_data.mouse_pos = (0, 0)
             game_data.mouse_button = None
             game_data.key_events = []
 

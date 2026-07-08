@@ -38,21 +38,33 @@ class Game_Board:
             self.NUM_BOMBS = num_bombs
         else:
             self.NUM_BOMBS = int(self.GRID_SIZE * self.GRID_SIZE * 0.1)
+
         self.TILE_SIZE = int(DEFAULT_BOARD_SIZE /
                              self.GRID_SIZE)  # tile size in px
+
         self.BOARD_SIZE = self.TILE_SIZE * self.GRID_SIZE
 
         self.game_data = game_data
 
+        self.board_start_x = (
+            self.game_data.display_buffer.get_width() - self.BOARD_SIZE) / 2
+        self.board_start_y = (
+            self.game_data.display_buffer.get_height() - self.BOARD_SIZE) / 2 + 25
+
         self.tiles = self._generate_board_tiles()
 
-        # self._tile_group = pygame.sprite.Group(self.tiles)
-        self.board_surface: pygame.Surface = pygame.Surface(
-            (
-                self.BOARD_SIZE,
-                self.BOARD_SIZE
-            )
+        self.border_rect = pygame.Rect(
+            self.board_start_x, self.board_start_y,
+            self.BOARD_SIZE, self.BOARD_SIZE
         )
+
+        # self._tile_group = pygame.sprite.Group(self.tiles)
+        # self.board_surface: pygame.Surface = pygame.Surface(
+        #     (
+        #         self.BOARD_SIZE,
+        #         self.BOARD_SIZE
+        #     )
+        # )
 
         self.num_flags = 0
         self.game_over = False
@@ -99,19 +111,14 @@ class Game_Board:
     def _generate_board_tiles(self):
         tiles: list[GameTile] = []
 
-        board_start_x = (
-            self.game_data.display_buffer.get_width() - self.BOARD_SIZE) / 2
-        board_start_y = (
-            self.game_data.display_buffer.get_height() - self.BOARD_SIZE) / 2
-
         for y in range(self.GRID_SIZE):
             for x in range(self.GRID_SIZE):
                 # create ui tile
                 tiles.append(
                     GameTile(
                         center_position=(
-                            x * self.TILE_SIZE + self.TILE_SIZE / 2 + board_start_x,
-                            y * self.TILE_SIZE + self.TILE_SIZE / 2 + board_start_y
+                            x * self.TILE_SIZE + self.TILE_SIZE / 2 + self.board_start_x,
+                            y * self.TILE_SIZE + self.TILE_SIZE / 2 + self.board_start_y
                         ),
                         tile_position=(x, y),
                         tile_size=self.TILE_SIZE,
@@ -123,6 +130,8 @@ class Game_Board:
         return tiles
 
     def update(self):
+        self._draw_frame()
+
         self.num_flags = 0
         self.game_won = self._check_win_condition()
         for tile in self.tiles:
@@ -153,11 +162,26 @@ class Game_Board:
             if self.game_over or self.game_won:
                 self.game_data.timer_stop()
                 self.game_data.game_state = GameState.GAMEOVER
-                
+
                 if self.game_over:
                     sounds.play_lose()
                 else:
                     sounds.play_win()
+
+    def _draw_frame(self):
+        """Zeichnet einen dekorativen Rahmen um das Spielfeld."""
+        buffer = self.game_data.display_buffer
+
+        # breiter "Holz"-Rahmen um das Feld
+        frame = self.border_rect.inflate(28, 28)
+        pygame.draw.rect(buffer, (139, 110, 70), frame, border_radius=10)
+
+        # dunkle Außenkante
+        pygame.draw.rect(buffer, (85, 65, 40), frame, 4, border_radius=10)
+
+        # dunkle Innenkante direkt am Spielfeld (wirkt wie eine Vertiefung)
+        inner = self.border_rect.inflate(6, 6)
+        pygame.draw.rect(buffer, (60, 46, 28), inner, 3, border_radius=4)
 
     def _update_shadows(self, tile: GameTile):
         "Updates the shadows of tile's neighbours"
