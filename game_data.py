@@ -27,6 +27,26 @@ DIFFICULTY_SETTINGS = {
     DifficultyLevel.HARD: {"grid_size": 16, "num_bombs": 30},
 }
 
+# Vorgespeicherte Entwickler-Bestzeiten
+# Diese sind immer in der Rangliste sichtbar und dienen als Ziel zum Übertreffen.
+DEFAULT_SCORES = {
+    DifficultyLevel.EASY.name: {
+        "Dev-Anna": 14.53,
+        "Dev-Max": 21.87,
+        "Dev-Timo": 35.20,
+    },
+    DifficultyLevel.MEDIUM.name: {
+        "Dev-Anna": 48.31,
+        "Dev-Max": 67.94,
+        "Dev-Timo": 92.50,
+    },
+    DifficultyLevel.HARD.name: {
+        "Dev-Anna": 124.76,
+        "Dev-Max": 168.42,
+        "Dev-Timo": 215.13,
+    },
+}
+
 
 class GameData:
     mouse_pos = (0, 0)
@@ -136,9 +156,11 @@ class GameData:
             Extra-Eintrag für den aktuellen Spieler, falls er eine Zeit
             hat, aber nicht in den Top 5 ist. Sonst None.
         """
-        scores: dict[str, float] = {}
+        scores: dict[str, float] = dict(
+            DEFAULT_SCORES.get(self.difficulty.name, {})
+        )
         if self._score_data is not None:
-            scores = self._score_data.get(self.difficulty.name, {})
+            scores.update(self._score_data.get(self.difficulty.name, {}))
 
         ranked = sorted(scores.items(), key=lambda kv: kv[1])
 
