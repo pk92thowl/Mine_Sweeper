@@ -71,10 +71,19 @@ class GameData:
     _score_data: dict[str, dict[str, float]] = None
 
     def init(self):
+
+        # Fenstertitel
+        pygame.display.set_caption("Sandstorm")
+
+        # Custom Icon (nutzt einfach dein Minen-Asset)
+        icon = pygame.image.load("assets/icon_32.png")
+        pygame.display.set_icon(icon)
+
         self.display = pygame.display.set_mode(
             (DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT),
             pygame.RESIZABLE
         )
+
         self.display_buffer = pygame.Surface(
             (DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT))
         self.game_state = GameState.NEWGAME
