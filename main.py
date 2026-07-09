@@ -332,11 +332,11 @@ def play_level():
         # )
 
         # Scale buffer to window size
-        game_data.display_buffer = pygame.transform.scale(
+        game_data.display_buffer = pygame.transform.smoothscale(
             game_data.display_buffer,
             (
-                game_data.display_buffer.get_rect().width * game_data.display_scaling_factor,
-                game_data.display_buffer.get_rect().height * game_data.display_scaling_factor
+                int(game_data.display_buffer.get_rect().width * game_data.display_scaling_factor),
+                int(game_data.display_buffer.get_rect().height * game_data.display_scaling_factor)
             )
         )
 
