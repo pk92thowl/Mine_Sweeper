@@ -31,19 +31,19 @@ DIFFICULTY_SETTINGS = {
 # Diese sind immer in der Rangliste sichtbar und dienen als Ziel zum Übertreffen.
 DEFAULT_SCORES = {
     DifficultyLevel.EASY.name: {
-        "Dev-Anna": 14.53,
-        "Dev-Max": 21.87,
-        "Dev-Timo": 35.20,
+        "Joana": 29.66,
+        "Josi": 13.41,
+        "Philipp": 5.61,
     },
     DifficultyLevel.MEDIUM.name: {
-        "Dev-Anna": 48.31,
-        "Dev-Max": 67.94,
-        "Dev-Timo": 92.50,
+        "Joana": 175.3,
+        "Josi": 69.84,
+        "Philipp": 40.38,
     },
     DifficultyLevel.HARD.name: {
-        "Dev-Anna": 124.76,
-        "Dev-Max": 168.42,
-        "Dev-Timo": 215.13,
+        "Joana": 150,
+        "Josi": 65.78,
+        "Philipp": 60.11,
     },
 }
 
